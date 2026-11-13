@@ -198,15 +198,16 @@ def calculate(instrument, df, events, meta):
 
     counts = [edge[h]["n"] for h in ORIZZONTI]
     confidence = "alta" if n >= 450 and min(counts) >= 5 else "media" if n >= MIN_BARS_VALIDATION and sum(v >= 3 for v in counts) >= 2 else "bassa"
+    # Considera attivi soltanto i sistemi con una posizione ancora aperta alla data corrente.
+    # Un segnale recente gia' uscito non deve essere contato come confluenza attuale.
     system_ages = {}
-    for event in events:
-        event_date, system_id = event[0], event[1]
-        event_pos = pos.get(str(event_date))
+    for trade in meta.get("tr", []):
+        if len(trade) < 4 or trade[3] is not None:
+            continue
+        system_id, entry_date = trade[0], trade[1]
+        event_pos = pos.get(str(entry_date))
         if event_pos is not None:
-            age = n - 1 - event_pos
-            if system_id not in system_ages or age < system_ages[system_id]:
-                system_ages[system_id] = age
-    system_ages = {k: v for k, v in system_ages.items() if v <= 10}
+            system_ages[system_id] = n - 1 - event_pos
     return {
         "t": ticker, "name": instrument.get("n", ticker), "isin": instrument.get("i"),
         "issuer": instrument.get("e"), "type": instrument.get("tp"), "asset_class": ASSET_CLASS_OVERRIDES.get(ticker, instrument.get("ac")),
