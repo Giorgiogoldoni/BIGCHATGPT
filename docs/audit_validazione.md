@@ -130,7 +130,7 @@ Il workflow e' terminato con successo e ha pubblicato il sito. Nel log risultano
 - invariabilita' degli ingressi storici aggiungendo barre future;
 - invariabilita' delle uscite gia' chiuse aggiungendo barre future.
 
-Il run ha usato `CLASSIFICA=0`: non ha ricalcolato la classifica. Il deploy riuscito e i test di causalita' non dimostrano che i sistemi siano profittevoli o statisticamente validi. Il build ha elaborato 2.709 strumenti: 2.328 con dati e 381 senza dati, elencati in `data/errori.json` nell'artefatto Pages del run. Il parametro `error_count: 10` mostrato nei log appartiene alla configurazione dell'azione di deploy e non rappresenta il numero di ticker mancanti. I 381 casi non possono essere classificati automaticamente come ETF cessati: il messaggio Yahoo 'No data found' puo' indicare simbolo errato, ticker non supportato, strumento cessato o indisponibilita' del fornitore. Occorre verificare i simboli e la loro esistenza prima di decidere se correggere l'universo o mantenerli esclusi.
+Il run ha usato `CLASSIFICA=0`: non ha ricalcolato la classifica. Il deploy riuscito e i test di causalita' non dimostrano che i sistemi siano profittevoli o statisticamente validi. Il precedente conteggio di 2.328 strumenti con dati e 381 senza dati era errato e viene ritirato. L'estrazione diretta dei log del job 131828684479 ha individuato 63 ticker distinti con messaggio Yahoo 'No data found'. Il parametro `error_count: 10` mostrato nei log appartiene alla configurazione dell'azione di deploy e non rappresenta il numero di ticker mancanti. I 63 casi non possono essere classificati automaticamente come strumenti cessati: il messaggio può indicare ticker non riconosciuto, copertura Yahoo assente, simbolo errato o strumento di recente emissione.
 
 ### Verifiche aggiuntive sul codice
 
@@ -162,3 +162,48 @@ Il testo di `rank.py` menziona 9 sistemi, mentre il registro attuale ne contiene
 E' stata rimossa la dipendenza della direzione iniziale del Parabolic SAR dalla chiusura della seconda barra: la barra zero ora parte da uno stato rialzista convenzionale, usando soltanto massimo e minimo della prima barra. E' stato aggiunto un test che cambia la chiusura futura e verifica che i valori PSAR della barra zero restino invariati.
 
 **Stato:** codice e test sono stati aggiornati, ma questa nuova modifica non e' ancora stata eseguita nel workflow GitHub Actions. Fino al superamento del prossimo workflow, la correzione resta non verificata automaticamente.
+
+
+## Anagrafica dei 63 ticker senza dati Yahoo — prima verifica ISIN
+
+Le date fornite dall'utente sono **date di emissione/lancio**, non date di cessazione. La dicitura "cripto" identifica gli strumenti legati a cripto-attività. Non eliminare questi strumenti dall'universo sulla sola base dell'errore Yahoo.
+
+### ISIN identificati con riscontro documentale
+
+| Ticker | Strumento / categoria | ISIN | Riscontro |
+|---|---|---|---|
+| ACSW.MI | iShares MSCI All Country World Swap UCITS ETF | IE000CYC2B65 | iShares e Borsa Italiana |
+| ASUI.MI | 21shares Sui Staking ETP | CH1360612159 | 21shares |
+| ATAO.MI | 21shares Bittensor ETP | CH1495416971 | Borsa Italiana |
+| BUNDS5.MI | SG ETN Daily Short -5x Bund Future | XS2425321713 | Borsa Italiana |
+| CANTN.MI | 21shares Canton Network ETP | CH1503127917 | Borsa Italiana |
+| CASHE.MI | BNP Paribas Easy EUR Overnight UCITS ETF Acc | LU3025345516 | justETF |
+| CBTC.MI | 21shares Bitcoin Core ETP | CH1199067674 | Borsa Italiana |
+| ESWP.MI | iShares MSCI EM Swap UCITS ETF USD Acc | IE000S3N6R34 | Borsa Italiana |
+| HDRA.MI | 21shares Hedera Staking ETP | CH1456607683 | 21shares |
+| IB36.MI | iShares iBonds Dec 2036 Term € Corp UCITS ETF | IE000AD2AYN2 | BlackRock e Borsa Italiana |
+| MORPH.MI | 21shares Morpho ETP | CH1506167027 | Stock Events; da confermare con emittente |
+| SYRUP.MI | 21shares Maple Finance ETP | CH1495416989 | Borsa Italiana |
+| TEND.MI | iShares US Large Cap Moderate Buffer Dec UCITS ETF | IE000Z5YU8X3 | BlackRock / justETF |
+| USMID.MI | Franklin ClearBridge US Smaller Companies UCITS ETF | IE000XJA2OU4 | justETF |
+| VEZU.MI | Vanguard FTSE Eurozone UCITS ETF EUR Acc | IE000Q4J3CW6 | Borsa Italiana |
+| VESC.MI | Vanguard FTSE Developed Europe Small-Cap UCITS ETF EUR Acc | IE00069H3LK0 | Vanguard |
+| WBLD.MI | WisdomTree Europe Infrastructure UCITS ETF | IE000AFVONT7 | WisdomTree |
+| WDAF.MI | WisdomTree Asia Defence UCITS ETF | IE000017NMH7 | WisdomTree |
+| WDGF.MI | WisdomTree Global Defence UCITS ETF | IE000KLC2EN9 | WisdomTree |
+| WEM.MI | WisdomTree True Emerging Markets UCITS ETF | IE000Q1M7HB8 | WisdomTree |
+| WETH.MI | WisdomTree Physical Ethereum | GB00BJYDH394 | WisdomTree |
+
+### Da verificare / ISIN non ancora identificato
+
+| Ticker | Nota |
+|---|---|
+| MDB1Y.MI | ISIN non identificato con sufficiente affidabilità |
+| UST5S.MI | ISIN non identificato con sufficiente affidabilità |
+| Tutti gli altri ticker della lista dei 63 | Da completare con verifica individuale, soprattutto dove Yahoo non restituisce dati |
+
+**Attenzione alle categorie:** ATAO, ASUI, CANTN, CBTC, HDRA, MORPH, SYRUP e WETH sono prodotti cripto/ETP, anche se alcuni non erano marcati "cripto" nella tabella iniziale. BUNDS5 è un ETN a leva -5 sul Bund future, non un ETF azionario. WEM, VESC e VEZU sono ETF azionari non cripto.
+
+**Fonti primarie e schede consultate:** [Borsa Italiana ACSW](https://www.borsaitaliana.it/borsa/etf/scheda/IE000CYC2B65-ETFP.html), [iShares ACSW](https://www.ishares.com/it/investitori-professionali/it/prodotti/345835/ishares-msci-all-country-world-swap-ucits-etf), [21shares ASUI](https://www.21shares.com/it-eu/product/asui), [Borsa Italiana ATAO](https://www.borsaitaliana.it/borsa/etc-etn/scheda/CH1495416971-ETFP.html), [Borsa Italiana CANTN](https://www.borsaitaliana.it/borsa/etc-etn/scheda/CH1503127917-ETFP.html), [Borsa Italiana BUNDS5](https://www.borsaitaliana.it/borsa/etc-etn/scheda/XS2425321713-ETFP.html), [justETF CASHE](https://www.justetf.com/it/etf-profile.html?isin=LU3025345516), [Borsa Italiana CBTC](https://www.borsaitaliana.it/borsa/etc-etn/listino-ufficiale.html?isin=CH1199067674&lang=it), [Borsa Italiana ESWP](https://www.borsaitaliana.it/borsa/etf/scheda/IE000S3N6R34-ETFP.html), [21shares HDRA](https://www.21shares.com/it-eu/product/hdra), [Borsa Italiana IB36](https://www.borsaitaliana.it/borsa/etf/scheda/IE000AD2AYN2-ETFP.html), [Borsa Italiana SYRUP](https://www.borsaitaliana.it/borsa/etc-etn/scheda/CH1495416989-ETFP.html), [BlackRock TEND](https://www.blackrock.com/it/investitori-privati/products/345078/ishares-us-large-cap-moderate-buffer-dec-ucits-etf), [justETF USMID](https://www.justetf.com/en-it/etf-profile.html?isin=IE000XJA2OU4), [Borsa Italiana VEZU](https://www.borsaitaliana.it/borsa/etf/scheda/IE000Q4J3CW6-ETFP.html), [Vanguard VESC](https://www.it.vanguard/investitori-privati/prodotti/etf/azionario/E151/ftse-developed-europe-small-cap-ucits-etf-eur-acc), [WisdomTree WBLD](https://www.wisdomtree.com/it/products/equities/wbld---wisdomtree-europe-infrastructure-ucits-etf---eur-acc), [WisdomTree WDAF](https://www.wisdomtree.com/it/products/equities/wdaf---wisdomtree-asia-defence-ucits-etf---usd-acc), [WisdomTree WDGF](https://www.wisdomtree.com/it/products/equities/wdgf---wisdomtree-global-defence-ucits-etf---usd-acc), [WisdomTree WEM](https://www.wisdomtree.com/it/products/equities/wem----wisdomtree-true-emerging-markets-ucits-etf---usd-acc), [WisdomTree WETH](https://www.wisdomtree.com/it/products/digital-assets/wisdomtree-physical-ethereum).
+
+**Prossimo controllo:** completare gli ISIN mancanti e confrontare ISIN/ticker con il file dell'universo di BIGCHATGPT; poi verificare se Yahoo richiede un simbolo alternativo o se lo strumento è stato emesso troppo recentemente per avere uno storico sufficiente. Nessun ticker va rimosso automaticamente.
