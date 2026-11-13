@@ -7,6 +7,7 @@ import yfinance as yf
 import systems as S
 import rank
 import score as SC
+import big_score as BS
 import mercato as M
 from issuers import issuer
 
@@ -140,3 +141,4 @@ if __name__ == "__main__":
     print("universo:", len(uni), "(.MI %d, iShares .DE %d)" % (sum(x["b"] == "Borsa Italiana" for x in uni), sum(x["b"] == "Xetra" for x in uni)))
     scrivi(uni, scarica([x["t"] for x in uni]))
     if not CLASSIFICA: recupera_classifica()
+    BS.write(DATA)
