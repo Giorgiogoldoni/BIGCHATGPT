@@ -219,3 +219,24 @@ La ricerca ha identificato anche i due strumenti che erano rimasti senza ISIN ne
 Fonti: [Borsa Italiana MDB1Y](https://www.borsaitaliana.it/borsa/etf/scheda/LU3333848920-ETFP.html), [Borsa Italiana UST5S](https://www.borsaitaliana.it/borsa/etc-etn/dettaglio.html?isin=XS2425318925&lang=it), [documento KID UST5S](https://kid.sgmarkets.com/public/api/kid/isin/XS2425318925?lang=ita).
 
 **Esito della prima richiesta:** per tutti i 15 ticker che nella tabella utente erano privi di data o indicazione cripto è stato ora individuato un ISIN. Per MORPH l'identificazione è supportata da una fonte secondaria e va confermata con il documento ufficiale dell'emittente. Gli ISIN identificano lo strumento, ma non dimostrano che Yahoo Finance debba necessariamente offrire uno storico per il suffisso .MI.
+
+
+## Perimetro operativo della validazione — scelta del 13/11/2026
+
+Su indicazione dell'utente, la prima validazione storica viene concentrata sugli strumenti non cripto con anzianità sufficiente. Sono temporaneamente messi fuori dal campione di validazione:
+- tutti i ticker indicati come cripto dall'utente;
+- gli ETP cripto identificati durante la verifica ISIN anche se non erano stati marcati come cripto nella tabella iniziale (ASUI, ATAO, CANTN, CBTC, HDRA, MORPH, SYRUP, WETH);
+- gli strumenti con data di emissione nel 2026 indicata dall'utente: ACSW, ESWP, EUTA, IB36, IB37, VEZU, WBLD, WDAF, WDGF e WETFE.
+
+Questa è un'esclusione **dal campione della validazione**, non una cancellazione dall'universo o dal sito. Non modificare il file master dei ticker e non eliminare le schede degli strumenti.
+
+### Candidati residui da verificare
+
+In base alle informazioni attualmente disponibili, i ticker da esaminare per primi sono:
+BUNDS5.MI, CASHE.MI, IG35.MI, MAXD.MI, MAXS.MI, MDB1Y.MI, TEND.MI, UST5S.MI, USMID.MI, VESC.MI e WEM.MI.
+
+Prima di considerarli tutti idonei, verificare data effettiva di prima quotazione, disponibilità dello storico e corrispondenza ticker/ISIN. BUNDS5 e UST5S sono ETN a leva e vanno valutati separatamente; non aggregarli agli ETF ordinari. CASHE, MDB1Y e TEND richiedono particolare attenzione alla data di lancio effettiva.
+
+Gli strumenti con emissione 2025 (IG35, MAXD, MAXS, USMID) non vengono esclusi automaticamente: si verifica quante sedute reali sono disponibili. La soglia minima per una specifica analisi resta quella richiesta dal test, non la sola data di emissione.
+
+**Regola:** l'assenza di dati Yahoo non equivale a delisting. Un ticker entra nel campione soltanto quando sono verificati identità, ISIN, quotazione e numero di barre disponibili. Fino ad allora resta in stato "da verificare".
