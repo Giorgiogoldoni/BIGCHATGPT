@@ -37,6 +37,7 @@ header,.bar,.note,.wrap{padding:12px 18px}header{padding-bottom:4px}h1{font-size
   <b>Score BIG sperimentale 0–100</b>: parte dallo score tecnico base e lo corregge fino a ±10 punti in base alla qualità storica dei sistemi BIG attivi sull’ETF. La qualità combina eccesso di rendimento, percentuale di segnali positivi, stabilità nelle due metà dello storico e numerosità del campione. Ogni famiglia pesa uguale, per evitare che i sei sistemi Trend dominino il risultato. I segnali più recenti pesano maggiormente. Se non c’è un segnale BIG recente, il punteggio resta uguale allo score base.
   È una classifica sperimentale: non è ancora dimostrato che migliori i risultati futuri. I test walk-forward sono il passaggio necessario.
 </div>
+<div class="note" id="validation">Verifica fuori campione: risultati non ancora generati. Esegui il workflow con classifica=true.</div>
 <div class="wrap">
   <table>
     <thead><tr>
@@ -81,6 +82,10 @@ fetch("data/score_big.json").then(r=>{if(!r.ok)throw new Error("score BIG non di
   $("meta").textContent="Calcolato "+d.generated+" · storico "+(d.period||"n.d.")+" · "+ROWS.length+" ETF ammessi · soglia "+d.min_bars_validation+" barre";
   render();
 }).catch(()=>{$("meta").textContent="Score non ancora disponibile: avvia il workflow BIGCHATGPT da GitHub Actions.";$("body").innerHTML='<tr><td colspan="20" class="empty">Esegui il workflow “Aggiorna BIGCHATGPT” per generare data/score_big.json.</td></tr>'});
+fetch("data/validation_big.json").then(r=>{if(!r.ok)throw new Error("holdout non disponibile");return r.json()}).then(v=>{
+  const rows=[20,40,60].map(h=>{const x=v.results[String(h)];return "<tr><td>+"+h+"</td><td class='n'>"+fmt(x.base.median)+"%</td><td class='n'>"+fmt(x.big.median)+"%</td><td class='n "+cls(x.delta.median)+"'>"+fmtSigned(x.delta.median)+" pp</td><td class='n'>"+fmt(x.base.positive_pct)+"%</td><td class='n'>"+fmt(x.big.positive_pct)+"%</td><td class='n'>"+x.overlap+"/20</td></tr>"}).join("");
+  $("validation").innerHTML="<b>Controllo fuori campione (12 mesi esclusi dal calcolo)</b><br>Cutoff: "+v.training_cutoff_target+" · ultimo dato: "+v.last_data_date+" · "+v.eligible_observations+" osservazioni ETF/orizzonte<br><table><thead><tr><th>Orizzonte</th><th>Mediana Top20 base</th><th>Mediana Top20 BIG</th><th>Δ mediana</th><th>Positivi base</th><th>Positivi BIG</th><th>ETF comuni</th></tr></thead><tbody>"+rows+"</tbody></table><br><span class='muted'>"+v.warning+"</span>";
+}).catch(()=>{});
 ["q","horizon"].forEach(id=>$(id).addEventListener("input",render));
 $("refresh").onclick=render;
 </script>
