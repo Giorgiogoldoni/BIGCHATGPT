@@ -39,13 +39,20 @@ def system_quality(stats):
 
 
 def _freshness(age):
+    # I segnali restano attivi finche' il trade BIG e' aperto; il peso decade con l'eta'.
     if age <= 3:
         return 1.0
     if age <= 5:
-        return 0.75
+        return 0.80
     if age <= 10:
+        return 0.60
+    if age <= 20:
         return 0.40
-    return 0.0
+    if age <= 40:
+        return 0.25
+    if age <= 60:
+        return 0.15
+    return 0.10
 
 
 def _signal_quality(row, stats_for_horizon):
@@ -56,7 +63,7 @@ def _signal_quality(row, stats_for_horizon):
         weighted, weights = 0.0, 0.0
         for sid in system_ids:
             age = ages.get(sid)
-            if age is None or age > 10:
+            if age is None:
                 continue
             stat = stats_for_horizon.get(sid)
             quality = system_quality(stat)
