@@ -58,6 +58,17 @@ class ScoreTests(unittest.TestCase):
         self.assertEqual(result["status"], "escluso_cripto")
         self.assertFalse(result["eligible"])
 
+    def test_currency_strategy_is_not_in_standard_etf_top20(self):
+        instrument = dict(self.instrument, t="EUUS.MI")
+        result = score.calculate(instrument, self.df, self.events, {"nuovo": False, "core": "HOLD"})
+        self.assertEqual(result["status"], "strumento_valutario")
+        self.assertFalse(result["eligible"])
+
+    def test_known_bond_funds_have_correct_asset_class(self):
+        instrument = dict(self.instrument, t="SXRH.DE")
+        result = score.calculate(instrument, self.df, self.events, {"nuovo": False, "core": "HOLD"})
+        self.assertEqual(result["asset_class"], "bond")
+
     def test_historical_edge_uses_adjusted_close_when_available(self):
         edge = score._historical_edge(self.df, self.events, 20)
         self.assertTrue(edge["total_return"])
