@@ -10,3 +10,8 @@ In questa prima fase i workflow automatici sono mantenuti disattivati per evitar
 ## Score e Top 20
 
 La pagina `top20.html` mostra lo score tecnico 0–100 per orizzonti +20/+40/+60 sedute. I dati sono generati da `scripts/score.py` e pubblicati in `data/score.json`. Per la prima classifica completa, avvia il workflow manuale con `classifica=true`.
+
+
+## Top 20 BIG potenziata (sperimentale)
+
+Il branch `big-tools-top20-experiment` aggiunge una seconda classifica parallela, senza modificare lo score base. Integra lo score tecnico con la qualità storica dei sistemi BIG attivi, per +20/+40/+60 sedute. La prima esecuzione completa richiede `classifica=true` per rigenerare le statistiche dei sistemi includendo anche +40. La classifica è sperimentale e va valutata con test walk-forward prima di considerarla un miglioramento.
