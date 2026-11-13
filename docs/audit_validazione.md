@@ -254,3 +254,59 @@ La lettura diretta della versione corrente di `scripts/rank.py` conferma questi 
 6. La funzione `migliore()` sceglie il massimo eccesso tra i sistemi che superano le regole definite. La selezione del massimo fra 12 sistemi e molti ETF introduce un effetto di selezione del vincitore; la soglia `T_MIN=2.0` non corregge i confronti multipli.
 
 **Intervento consigliato, non ancora applicato:** mantenere separati i risultati descrittivi attuali e una futura validazione inferenziale. Per quest'ultima usare rendimenti non sovrapposti con confronto coerente contro un benchmark, errori standard robusti alla dipendenza temporale o bootstrap a blocchi, correzione per confronti multipli e una finestra out-of-sample mai usata per scegliere il sistema. Non cambiare ora le etichette o la classifica prima di aver definito e testato il nuovo metodo.
+
+
+## Verifica PSAR e prima versione dello score — 13/11/2026
+
+### PSAR
+
+La funzione parabolic_sar() è stata resa causale fin dalla prima barra: la barra zero usa soltanto il minimo e il massimo della prima barra e non legge la chiusura della barra successiva.
+
+È stata rafforzata la prova automatica in scripts/test_causality.py: la stessa serie OHLC con chiusure future differenti deve produrre identici valori SAR, trend e flip; inoltre il calcolo su un prefisso deve coincidere con le prime barre del calcolo completo.
+
+Verifica indipendente aggiuntiva sulla copia del codice presente nel repository:
+- 2.328 serie storiche;
+- 909.345 barre complessive;
+- confronti su più prefissi di ciascuna serie;
+- perturbazione delle chiusure future;
+- zero divergenze.
+
+La strategia autonoma ev_psar() è distinta dall'indicatore parabolic_sar(). È stata anch'essa riprodotta su tutte le 2.328 serie: ingressi e uscite già maturati sono rimasti invariati sui prefissi provati.
+
+**Stato:** verifica indipendente superata; il test automatico aggiornato deve ancora essere eseguito nel workflow GitHub Actions.
+
+### Score tecnico 0–100
+
+Aggiunto scripts/score.py, con tre punteggi distinti per +20, +40 e +60 sedute e score complessivo come media semplice dei tre.
+
+Pesi:
+- Trend e struttura: 25 punti.
+- Momentum corretto per volatilità: 20 punti.
+- Forza del trend (ADX e direzionalità): 15 punti.
+- Confluenza e freschezza dei segnali: 20 punti.
+- Rischio (ATR e distanza dai massimi recenti): 10 punti.
+- Eccesso storico dei segnali rispetto al comportamento ordinario dello stesso ETF: 5 punti.
+- Liquidità stimata dal turnover mediano prezzo × volume degli ultimi 20 giorni: 5 punti.
+
+Il momentum è valutato in rapporto alla volatilità dell'ETF, non soltanto come rendimento positivo/negativo. Il rendimento storico utilizza Adj Close quando disponibile, convertendo il prezzo grezzo del segnale nella stessa scala adjusted; in assenza di Adj Close ripiega su Close. Il turnover è nominale nella valuta della quotazione e non sostituisce il controllo dello spread.
+
+### Perimetro della Top 20
+
+Gli strumenti non vengono cancellati dall'universo BIG. Sono esclusi dalla Top 20 validata:
+- cripto e gli ETP cripto identificati nell'audit;
+- le emissioni 2026 già elencate nella sezione sul perimetro di validazione;
+- prodotti non ETF, strumenti a leva o inversi;
+- prodotti con meno di 230 barre disponibili;
+- EUUS.MI, esposizione valutaria long USD/short EUR, non ETF tradizionale.
+
+Le classi di SXRH.DE (TIPS) e FEDF.MI (money market) sono corrette nella sola uscita score come obbligazionarie; l'anagrafica generale dell'universo non viene modificata.
+
+La pagina top20.html mostra score, punteggi per orizzonte, momentum, RSI, ADX, ATR, turnover e copertura storica. La copertura (alta/media/bassa) indica disponibilità di barre e numero di segnali storici, non una probabilità di successo.
+
+### Generazione dei dati
+
+- Con input classifica=false, il workflow scarica 2 anni e produce uno score esplorativo su tale finestra.
+- Con input classifica=true, scarica 5 anni e produce lo score usando la storia più ampia; è l'esecuzione richiesta per la prima classifica completa.
+- Il workflow ora esegue test_causality.py e test_score.py prima del download e pubblica top20.html insieme alle altre pagine.
+
+**Limiti residui:** lo score è un filtro tecnico, non un rendimento atteso né un backtest operativo. La componente storica vale soltanto 5 punti e non corregge ancora in modo completo confronti multipli, dipendenza temporale o survivorship bias. La classifica 5 anni deve essere generata dal workflow e poi sottoposta a verifica walk-forward prima di essere considerata robusta.
