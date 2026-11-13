@@ -240,3 +240,17 @@ Prima di considerarli tutti idonei, verificare data effettiva di prima quotazion
 Gli strumenti con emissione 2025 (IG35, MAXD, MAXS, USMID) non vengono esclusi automaticamente: si verifica quante sedute reali sono disponibili. La soglia minima per una specifica analisi resta quella richiesta dal test, non la sola data di emissione.
 
 **Regola:** l'assenza di dati Yahoo non equivale a delisting. Un ticker entra nel campione soltanto quando sono verificati identità, ISIN, quotazione e numero di barre disponibili. Fino ad allora resta in stato "da verificare".
+
+
+## Verifica puntuale di rank.py — 13/11/2026
+
+La lettura diretta della versione corrente di `scripts/rank.py` conferma questi punti:
+
+1. Per ogni orizzonte N, il rendimento di base è calcolato come `Close[i+N] / Close[i] - 1` su tutte le barre disponibili. Il riferimento complessivo usato per la t è la **media** di questi rendimenti, mentre l'eccesso principale sottrae la **mediana** di base alla mediana dei rendimenti successivi ai segnali. Sono due confronti diversi e vanno descritti distintamente.
+2. La statistica è `(media(rendimenti_segnali_selezionati) - media(rendimenti_base)) / (deviazione_standard_segnali / sqrt(n_segnali))`. Il denominatore misura solo l'incertezza della media dei segnali e tratta la media di base come se fosse priva di errore. Inoltre i rendimenti di base e quelli dei segnali non sono campioni indipendenti. Il valore non va interpretato come un t-test standard valido o come probabilità di successo.
+3. Il filtro di non sovrapposizione seleziona un segnale ogni N barre, ma non elimina la dipendenza seriale e di regime. La mediana, la percentuale positiva e gli eccessi nelle due metà sono invece calcolati sull'intero insieme dei segnali misurabili, inclusi quelli con finestre sovrapposte.
+4. `MIN_SEGNALI=10` è una soglia minima descrittiva, non una garanzia di potenza statistica. Le due metà richiedono almeno 3 segnali ciascuna; anche questo è un requisito minimo, non una prova di stabilità.
+5. Il commento di calibrazione su 150 serie casuali e sui regimi simulati è riportato come testo statico in `REGOLE`: in questo file non è presente il codice che genera le 150 serie né quello che riproduce la calibrazione. La calibrazione non è quindi riproducibile dalla sola implementazione esaminata.
+6. La funzione `migliore()` sceglie il massimo eccesso tra i sistemi che superano le regole definite. La selezione del massimo fra 12 sistemi e molti ETF introduce un effetto di selezione del vincitore; la soglia `T_MIN=2.0` non corregge i confronti multipli.
+
+**Intervento consigliato, non ancora applicato:** mantenere separati i risultati descrittivi attuali e una futura validazione inferenziale. Per quest'ultima usare rendimenti non sovrapposti con confronto coerente contro un benchmark, errori standard robusti alla dipendenza temporale o bootstrap a blocchi, correzione per confronti multipli e una finestra out-of-sample mai usata per scegliere il sistema. Non cambiare ora le etichette o la classifica prima di aver definito e testato il nuovo metodo.
