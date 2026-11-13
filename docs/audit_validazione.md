@@ -7,7 +7,7 @@ Ambito: revisione statica e controlli automatici sul codice presente nel reposit
 
 - **Look-ahead ZigZag/SMR:** corretto il 13/11/2026; il test sintetico di causalita' e' passato nel workflow del 13/11/2026. Resta da verificare su casi storici reali e con test specifici del pivot.
 - **Indipendenza della classifica:** corretto il 13/11/2026; un'esecuzione del workflow ha completato download, calcolo e deploy di BIGCHATGPT senza ricalcolare la classifica. Il sito clone ha pubblicato i propri dati.
-- **Priorita' Core BUY3/BUY2:** difetto individuato e corretto il 13/11/2026; aggiunto test di regressione dedicato, in attesa di esecuzione nel workflow.
+- **Priorita' Core BUY3/BUY2:** difetto corretto il 13/11/2026; test di regressione superato nel workflow run 43408492609.
 
 ## Sintesi
 
@@ -15,13 +15,13 @@ La classifica attuale è un'analisi descrittiva dei rendimenti successivi ai seg
 
 ## Rilievi da risolvere, in ordine di priorità
 
-### 1. Look-ahead nel Super Mean Reversion — corretto, da testare
+### 1. Look-ahead nel Super Mean Reversion — corretto, test sintetici superati
 
 File: `scripts/az_engine.py`, funzioni `calc_zigzag()` e `az_serie()`.
 
 `calc_zigzag()` conferma un pivot soltanto quando una successiva oscillazione supera la soglia ATR, ma restituisce il pivot con l'indice storico dell'estremo (`tmp_max_idx` / `tmp_min_idx`). In `az_serie()`, `ultimo_pivot_h_per_barra` rende quel massimo disponibile già dalla data dell'estremo, non dalla data in cui il pivot è diventato conoscibile.
 
-Il motore Super Mean Reversion usa poi quel massimo per misurare il drawdown e può quindi ricevere un'informazione confermata soltanto in futuro. È una potenziale fuga di informazione futura (look-ahead). Va corretto facendo decorrere la disponibilità del pivot dalla barra di conferma, e poi ricalcolati segnali e statistiche SMR.
+Il motore Super Mean Reversion usa il massimo soltanto dalla barra di conferma. La correzione e' presente nel codice; i test sintetici di invariabilita' degli ingressi e delle uscite sono passati nel run 43408492609. Resta da confrontare il comportamento su serie storiche reali e casi mirati di pivot ZigZag.
 
 ### 2. Rendimenti senza dividendi — priorità alta
 
@@ -62,11 +62,11 @@ File: `scripts/systems.py`.
 
 Alcuni ingressi sono ordini stop attivati da massimi/minimi giornalieri e simulati al prezzo stop o all'apertura in caso di gap: è una scelta sensata come prima approssimazione, ma va verificata su barre OHLC e con casi ambigui intraday. Inoltre `MINTICK = 0.01` è fisso per strumenti e borse differenti; non rappresenta necessariamente il tick minimo negoziabile di ogni ETF/ETC.
 
-### 7. Recupero della classifica dal sito originale — corretto, da verificare
+### 7. Recupero della classifica dal sito originale — corretto
 
 File: `scripts/build.py`, costante `LIVE` e funzione `recupera_classifica()`.
 
-Nei run in cui `CLASSIFICA=0`, BIGCHATGPT scarica `classifica.json` e `classifica_sintesi.json` da `https://giorgiogoldoni.github.io/big/data/`, cioè dal sito BIG originale. Quindi il clone è separato come repository e sito, ma non è ancora completamente indipendente nei dati della classifica. Va modificato in modo che BIGCHATGPT conservi e riutilizzi la propria classifica, senza leggere quella di BIG.
+Nei run in cui `CLASSIFICA=0`, BIGCHATGPT recupera i file della classifica dal proprio sito Pages (`https://giorgiogoldoni.github.io/BIGCHATGPT/data/`). La modifica e' stata pubblicata e verificata nel run 43408492609, che ha completato il deploy con `CLASSIFICA=0`.
 
 
 ### 10. Filtro Hurst: stima approssimata, soglie non validate — da verificare
@@ -81,15 +81,15 @@ File: `scripts/test_causality.py`.
 
 Il primo test confrontava gli ingressi storici, ma non verificava esplicitamente che le uscite gia' avvenute (segnali di uscita e stop) restassero identiche aggiungendo barre future. E' stato aggiunto un controllo sui trade chiusi entro ciascuna data di taglio: sistema, data/prezzo di ingresso e data/prezzo/motivo di uscita devono coincidere tra serie completa e prefisso. Il test e' stato aggiunto il 13/11/2026 e deve essere eseguito nel workflow.
 
-### 8. BUY3 del sistema Core irraggiungibile — corretto, test dedicato in attesa
+### 8. BUY3 del sistema Core irraggiungibile — corretto, test superato
 
 File: `scripts/core_engine.py`, funzione `calc_segnale_array()`.
 
-La condizione BUY2 (prezzo sopra KAMA e almeno 2 barre sopra) veniva verificata prima della BUY3. Poiche' ogni BUY3 soddisfa anche le condizioni meno restrittive di BUY2, il ramo BUY3 non poteva essere raggiunto. Il controllo e' stato riordinato: BUY1, poi BUY3, poi BUY2. E' stato aggiunto un test che verifica entrambe le uscite su casi costruiti appositamente; deve ancora essere eseguito nel workflow prima di considerare la correzione verificata.
+La condizione BUY2 (prezzo sopra KAMA e almeno 2 barre sopra) veniva verificata prima della BUY3. Poiche' ogni BUY3 soddisfa anche le condizioni meno restrittive di BUY2, il ramo BUY3 non poteva essere raggiunto. Il controllo e' stato riordinato: BUY1, poi BUY3, poi BUY2. Il test dedicato, con casi costruiti appositamente, e' stato superato nel workflow run 43408492609.
 
 ## Piano di lavoro proposto
 
-1. Correggere il look-ahead ZigZag/SMR e aggiungere test che dimostrino che una barra passata non cambia quando si aggiungono barre future.
+1. Verificare su casi storici reali la correzione ZigZag/SMR gia' introdotta e mantenere i test di causalita'.
 2. Separare i prezzi usati per i segnali dai rendimenti total-return, documentando dividendi e split.
 3. Rendere indipendente il recupero della classifica di BIGCHATGPT.
 4. Costruire una validazione walk-forward: sviluppo su una finestra, verifica su una finestra successiva mai usata per scegliere i parametri, poi avanzamento nel tempo.
