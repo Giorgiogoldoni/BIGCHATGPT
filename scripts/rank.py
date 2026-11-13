@@ -8,12 +8,12 @@ from pathlib import Path
 ORIZZONTI = (5, 10, 20, 60)
 MIN_SEGNALI = 10     # sotto questa soglia la coppia ETF-sistema non si giudica
 MIN_META = 3         # segnali minimi in ciascuna meta' per misurarla
-T_MIN = 2.0          # soglia di significativita' (t di Student su segnali non sovrapposti): taglia i falsi positivi del caso
+T_MIN = 2.0          # soglia esplorativa: non equivale a un test inferenziale completo
 REGOLE = [
     "Si misura il rendimento della chiusura 5, 10, 20 e 60 barre dopo ogni freccia, partendo dal prezzo del segnale. Nessuna simulazione di operazioni, costi ignorati (rendimenti lordi).",
     "Eccesso = rendimento mediano dopo i segnali meno il rendimento mediano dello stesso ETF su tutti i giorni dello stesso periodo: toglie l'effetto di un ETF che sale comunque.",
     "Una coppia ETF-sistema si giudica solo con almeno %d segnali misurabili a quell'orizzonte; sotto la soglia resta 'dati insufficienti'." % MIN_SEGNALI,
-    "Affidabile = eccesso positivo sull'intera storia, positivo anche in entrambe le meta' (almeno %d segnali ciascuna) e statisticamente distinguibile dal caso: t >= %.1f calcolato solo su segnali non sovrapposti (distanti almeno quanto l'orizzonte). Non verificato = eccesso positivo ma una di queste prove manca." % (MIN_META, T_MIN),
+    "Etichetta 'affidabile' = eccesso positivo sull'intera storia e in entrambe le meta' (almeno %d segnali ciascuna), piu' indicatore t esplorativo >= %.1f su segnali non sovrapposti. Non e' un test inferenziale completo: non corregge i confronti multipli e non elimina la dipendenza temporale." % (MIN_META, T_MIN),
     "Il miglior sistema e' quello con l'eccesso piu' alto tra gli affidabili; se nessuno lo e', tra i non verificati. Se nessuno ha eccesso positivo: 'nessuno'.",
     "Calibrazione su 150 serie casuali (nessun vantaggio reale): il test segnala 'affidabile' nel 9% degli ETF a +5 barre, 4% a +10, 2% a +20, 1% a +60. Su serie con regimi di trend simulati ne riconosce solo il 7% a +10 e il 3% a +20: il test e' prudente e riconosce poco, quindi la maggior parte degli ETF restera' 'non verificato'.",
     "Attenzione: con 12 sistemi registrati per ETF il migliore del passato puo' essere frutto del caso, e i segnali vicini hanno finestre sovrapposte (soprattutto a 60 barre). E' una misura del passato, non una previsione.",
