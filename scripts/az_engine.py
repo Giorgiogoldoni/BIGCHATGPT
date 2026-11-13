@@ -226,10 +226,13 @@ def parabolic_sar(high: pd.Series, low: pd.Series, close: pd.Series, step=SAR_ST
     if n < 2:
         return pd.Series(sar, index=close.index), pd.Series(trend, index=close.index), pd.Series(flip, index=close.index)
 
-    trend[0] = 1 if close.iloc[1] >= close.iloc[0] else -1
-    sar[0] = low.iloc[0] if trend[0] == 1 else high.iloc[0]
+    # Inizializzazione causale: non usare close[1] per decidere lo stato della barra 0.
+    # Si parte in trend rialzista convenzionale; dalla barra 1 il SAR si aggiorna
+    # usando soltanto i dati disponibili fino alla barra corrente.
+    trend[0] = 1
+    sar[0] = low.iloc[0]
     af = step
-    ep = high.iloc[0] if trend[0] == 1 else low.iloc[0]
+    ep = high.iloc[0]
 
     for i in range(1, n):
         prev_sar = sar[i - 1]
