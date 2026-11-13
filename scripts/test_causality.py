@@ -99,6 +99,22 @@ class CausalityTests(unittest.TestCase):
         )
         self.assertEqual(result, ["BUY3", "BUY2"])
 
+    def test_psar_initial_state_does_not_read_future_close(self):
+        from az_engine import parabolic_sar
+
+        idx = pd.bdate_range("2024-01-02", periods=2)
+        high = pd.Series([101.0, 103.0], index=idx)
+        low = pd.Series([99.0, 98.0], index=idx)
+        close_a = pd.Series([100.0, 102.0], index=idx)
+        close_b = pd.Series([100.0, 97.0], index=idx)
+
+        sar_a, trend_a, flip_a = parabolic_sar(high, low, close_a)
+        sar_b, trend_b, flip_b = parabolic_sar(high, low, close_b)
+
+        self.assertEqual(float(sar_a.iloc[0]), float(sar_b.iloc[0]))
+        self.assertEqual(int(trend_a.iloc[0]), int(trend_b.iloc[0]))
+        self.assertEqual(bool(flip_a.iloc[0]), bool(flip_b.iloc[0]))
+
     def test_all_twelve_systems_are_registered(self):
         ids = [s["id"] for s in S.SYSTEMS]
         self.assertEqual(len(ids), 12)
