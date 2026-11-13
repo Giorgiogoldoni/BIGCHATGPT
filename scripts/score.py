@@ -198,6 +198,15 @@ def calculate(instrument, df, events, meta):
 
     counts = [edge[h]["n"] for h in ORIZZONTI]
     confidence = "alta" if n >= 450 and min(counts) >= 5 else "media" if n >= MIN_BARS_VALIDATION and sum(v >= 3 for v in counts) >= 2 else "bassa"
+    system_ages = {}
+    for event in events:
+        event_date, system_id = event[0], event[1]
+        event_pos = pos.get(str(event_date))
+        if event_pos is not None:
+            age = n - 1 - event_pos
+            if system_id not in system_ages or age < system_ages[system_id]:
+                system_ages[system_id] = age
+    system_ages = {k: v for k, v in system_ages.items() if v <= 10}
     return {
         "t": ticker, "name": instrument.get("n", ticker), "isin": instrument.get("i"),
         "issuer": instrument.get("e"), "type": instrument.get("tp"), "asset_class": ASSET_CLASS_OVERRIDES.get(ticker, instrument.get("ac")),
@@ -207,7 +216,7 @@ def calculate(instrument, df, events, meta):
         "liquidity": liquidity, "turnover20": round(turnover20, 0) if turnover20 is not None else None,
         "roc20": round(momentum[20], 2), "roc40": round(momentum[40], 2), "roc60": round(momentum[60], 2),
         "rsi14": round(rsi_last, 1), "adx14": round(adx_last, 1), "atr_pct": round(atr_pct, 2),
-        "signal_ages": signal_ages, "edge": {str(h): edge[h] for h in ORIZZONTI},
+        "signal_ages": signal_ages, "system_ages": system_ages, "edge": {str(h): edge[h] for h in ORIZZONTI},
         "coverage": confidence, "status": status, "eligible": eligible,
     }
 
