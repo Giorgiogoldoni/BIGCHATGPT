@@ -24,16 +24,17 @@ def system_quality(stats):
     """Qualita' storica 0-100. Richiede almeno 10 segnali e due meta' misurabili.
     Non usa la statistica t di rank.py, che non e' un test inferenziale corretto.
     """
-    if not stats or len(stats) < 9:
+    if not stats or len(stats) < 17:
         return None
-    n, hit, median, excess, first, second = stats[:6]
-    if n < 10 or excess is None or first is None or second is None:
+    # Gli indici 9-16 sono le statistiche sui segnali non sovrapposti.
+    n_eff, median_eff, hit_eff, excess_eff, first_eff, second_eff, n1_eff, n2_eff = stats[9:17]
+    if n_eff < 5 or excess_eff is None or first_eff is None or second_eff is None:
         return None
-    excess_score = 50.0 + 50.0 * math.tanh(float(excess) / 5.0)
-    hit_score = _clip(50.0 + 2.0 * (float(hit) - 50.0))
-    stability = _clip(50.0 + 25.0 * math.tanh(float(first) / 4.0)
-                      + 25.0 * math.tanh(float(second) / 4.0))
-    sample = min(100.0, 100.0 * float(n) / 30.0)
+    excess_score = 50.0 + 50.0 * math.tanh(float(excess_eff) / 5.0)
+    hit_score = _clip(50.0 + 2.0 * (float(hit_eff) - 50.0))
+    stability = _clip(50.0 + 25.0 * math.tanh(float(first_eff) / 4.0)
+                      + 25.0 * math.tanh(float(second_eff) / 4.0))
+    sample = min(100.0, 100.0 * float(n_eff) / 10.0)
     return round(0.40 * excess_score + 0.25 * hit_score
                  + 0.25 * stability + 0.10 * sample, 1)
 
@@ -74,7 +75,7 @@ def _signal_quality(row, stats_for_horizon):
             weights += w
             details.append({
                 "id": sid, "age": int(age), "quality": quality,
-                "n": int(stat[0]), "excess": stat[3], "hit": stat[1],
+                "n": int(stat[9]), "excess": stat[12], "hit": stat[11],
             })
         if weights:
             family_scores.append(weighted / weights)
