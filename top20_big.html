@@ -40,13 +40,13 @@ header,.bar,.note,.wrap{padding:12px 18px}header{padding-bottom:4px}h1{font-size
 <div class="wrap">
   <table>
     <thead><tr>
-      <th>#</th><th>Ticker</th><th>Strumento</th><th>Classe</th><th class="n">Score</th>
+      <th>#</th><th>Ticker</th><th>Strumento</th><th>Classe</th><th class="n">Score BIG</th><th class="n">Base</th><th class="n">Δ BIG</th>
       <th class="n">+20</th><th class="n">+40</th><th class="n">+60</th>
       <th class="n">ROC 20</th><th class="n">ROC 40</th><th class="n">ROC 60</th>
       <th class="n">RSI</th><th class="n">ADX</th><th class="n">ATR %</th><th class="n">Turnover 20g</th>
       <th>Copertura storico</th><th>Ultima barra</th>
     </tr></thead>
-    <tbody id="body"><tr><td colspan="17" class="empty">Lettura dei dati…</td></tr></tbody>
+    <tbody id="body"><tr><td colspan="20" class="empty">Lettura dei dati…</td></tr></tbody>
   </table>
 </div>
 <div class="note">
@@ -70,7 +70,7 @@ function render(){
   $("count").textContent=list.length+" strumenti mostrati · "+ROWS.length+" ammessi";
   $("body").innerHTML=list.length?list.map((r,i)=>
     "<tr><td class='rank'>"+(i+1)+"</td><td><b>"+r.t+"</b></td><td class='name'>"+r.name+"</td><td>"+assetLabel(r.asset_class)+"</td>"+
-    "<td class='n score'>"+fmt(r[h])+"</td><td class='n'>"+fmt(r.score_big20)+"</td><td class='n'>"+fmt(r.score_big40)+"</td><td class='n'>"+fmt(r.score_big60)+"</td><td>"+activeSystems(r,h)+"</td>"+
+    "<td class='n score'>"+fmt(r[h])+"</td><td class='n'>"+fmt(r.score)+"</td><td class='n "+cls((r[h]??0)-(h==="score_big20"?r.score20:h==="score_big40"?r.score40:r.score))+"'>"+fmtSigned((r[h]??0)-(h==="score_big20"?r.score20:h==="score_big40"?r.score40:r.score))+"</td><td class='n'>"+fmt(r.score_big20)+"</td><td class='n'>"+fmt(r.score_big40)+"</td><td class='n'>"+fmt(r.score_big60)+"</td><td>"+activeSystems(r,h)+"</td>"+
     "<td class='n "+cls(r.roc20)+"'>"+fmtSigned(r.roc20,2)+"%</td><td class='n "+cls(r.roc40)+"'>"+fmtSigned(r.roc40,2)+"%</td><td class='n "+cls(r.roc60)+"'>"+fmtSigned(r.roc60,2)+"%</td>"+
     "<td class='n'>"+fmt(r.rsi14)+"</td><td class='n'>"+fmt(r.adx14)+"</td><td class='n'>"+fmt(r.atr_pct,2)+"%</td><td class='n'>"+turn(r.turnover20)+"</td>"+
     "<td><span class='tag'>"+(r.coverage||"–")+"</span></td><td>"+(r.date||"–")+"</td></tr>"
