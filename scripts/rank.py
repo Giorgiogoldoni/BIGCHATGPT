@@ -40,7 +40,16 @@ def stat_coppia(C, base, N, segnali, m):
     t = None
     if len(sel) >= 5 and np.std(sel, ddof=1) > 0:
         t = round(float((np.mean(sel) - bm) / (np.std(sel, ddof=1) / np.sqrt(len(sel)))), 1)
-    return [len(r), int(round(100 * np.mean([x > 0 for _, x in r]))), _p(med), _p(med - b0), _p(e1), _p(e2), len(r1), len(r2), t]
+    # Statistiche su segnali non sovrapposti: sono quelle usate dal nuovo score BIG.
+    sel1 = [x for i, x in sel if i < m]
+    sel2 = [x for i, x in sel if i >= m]
+    med_sel = float(np.median(sel)) if sel else None
+    hit_sel = int(round(100 * np.mean([x > 0 for x in sel]))) if sel else None
+    excess_sel = _p(med_sel - b0) if med_sel is not None else None
+    e1_sel = _p(float(np.median(sel1)) - b1) if len(sel1) >= MIN_META and b1 is not None else None
+    e2_sel = _p(float(np.median(sel2)) - b2) if len(sel2) >= MIN_META and b2 is not None else None
+    return [len(r), int(round(100 * np.mean([x > 0 for _, x in r]))), _p(med), _p(med - b0), _p(e1), _p(e2), len(r1), len(r2), t,
+            len(sel), _p(med_sel), hit_sel, excess_sel, e1_sel, e2_sel, len(sel1), len(sel2)]
 
 
 def migliore(st):
