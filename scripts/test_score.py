@@ -50,6 +50,7 @@ class ScoreTests(unittest.TestCase):
         result = score.calculate(instrument, self.df, self.events, {"nuovo": False, "core": "HOLD"})
         self.assertEqual(result["status"], "escluso_emissione_2026")
         self.assertFalse(result["eligible"])
+        self.assertEqual(result["edge"]["20"]["n"], 0)
         self.assertIsNotNone(result["score"])
 
     def test_crypto_remains_outside_validation(self):
