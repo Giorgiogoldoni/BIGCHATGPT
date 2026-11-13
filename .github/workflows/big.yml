@@ -33,6 +33,9 @@ jobs:
           python-version: '3.11'
       - name: Dipendenze
         run: pip install pandas numpy yfinance reportlab
+      - name: Test causalita' dei 12 sistemi
+        run: python -m unittest test_causality.py -v
+        working-directory: scripts
       - name: Scarica dati e calcola segnali
         run: python build.py
         working-directory: scripts
