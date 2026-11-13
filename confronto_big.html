@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BIGCHATGPT – Confronto Top 20</title>
+<style>
+body{margin:0;background:#fff;color:#17202a;font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header,.note,.wrap{padding:12px 18px}h1{font-size:22px;margin:0}h2{font-size:16px;margin:18px 0 8px}.sub,.muted{color:#667085;font-size:12px}
+a{color:#175cd3}table{border-collapse:collapse;width:100%;min-width:680px}th,td{padding:8px;border-bottom:1px solid #eceff2;text-align:left}th{background:#f8fafc}.n{text-align:right;font-variant-numeric:tabular-nums}.pos{color:#147d45}.neg{color:#b42318}.wrap{overflow-x:auto}.lists{display:grid;grid-template-columns:1fr 1fr;gap:18px}.panel{border:1px solid #e4e7ec;border-radius:8px;padding:12px;overflow-x:auto}.panel h3{margin:0 0 8px;font-size:14px}@media(max-width:760px){.lists{grid-template-columns:1fr}header,.note,.wrap{padding:10px 12px}}
+</style>
+</head>
+<body>
+<header><h1>Confronto Top 20: modello base vs sistemi BIG</h1><div class="sub" id="meta">Caricamento della verifica fuori campione…</div></header>
+<div class="note">
+Il test usa i dati fino al cutoff per calcolare entrambi i punteggi. I 12 mesi successivi sono esclusi dal calcolo e usati soltanto per misurare il rendimento futuro a +20/+40/+60 sedute. La classifica BIG corregge il punteggio base in base alla qualità storica dei sistemi BIG effettivamente ancora in posizione.
+</div>
+<div class="wrap"><table>
+<thead><tr><th>Orizzonte</th><th class="n">Mediana base</th><th class="n">Mediana BIG</th><th class="n">Differenza</th><th class="n">Media base</th><th class="n">Media BIG</th><th class="n">Positivi base</th><th class="n">Positivi BIG</th><th class="n">Comuni</th></tr></thead>
+<tbody id="metrics"><tr><td colspan="9">In attesa dei risultati…</td></tr></tbody>
+</table></div>
+<div class="note" id="warning"></div>
+<div class="wrap">
+<h2>Composizione delle Top 20</h2>
+<div id="lists" class="lists"></div>
+</div>
+<div class="note"><a href="top20.html">Top 20 base</a> · <a href="top20_big.html">Top 20 BIG potenziata</a> · <a href="classifica.html">Classifica dei sistemi</a></div>
+<script>
+const $=id=>document.getElementById(id);
+const f=(v,d=1)=>v==null?"–":Number(v).toFixed(d).replace(".",",");
+const signed=v=>v==null?"–":(v>0?"+":"")+f(v);
+const cls=v=>v==null?"":v>0?"pos":v<0?"neg":"";
+fetch("data/validation_big.json").then(r=>{if(!r.ok)throw new Error("file non disponibile");return r.json()}).then(v=>{
+ $("meta").textContent="Training fino a "+v.training_cutoff_target+" · dati fino a "+v.last_data_date+" · "+v.eligible_observations+" osservazioni ETF/orizzonte";
+ $("warning").textContent=v.warning+" Strumenti esclusi o non valutabili: "+v.skipped_instruments+".";
+ $("metrics").innerHTML=[20,40,60].map(h=>{const x=v.results[String(h)];return "<tr><td>+"+h+"</td><td class='n'>"+f(x.base.median)+"%</td><td class='n'>"+f(x.big.median)+"%</td><td class='n "+cls(x.delta.median)+"'>"+signed(x.delta.median)+" punti %</td><td class='n'>"+f(x.base.mean)+"%</td><td class='n'>"+f(x.big.mean)+"%</td><td class='n'>"+f(x.base.positive_pct)+"%</td><td class='n'>"+f(x.big.positive_pct)+"%</td><td class='n'>"+x.overlap+"/20</td></tr>"}).join("");
+ $("lists").innerHTML=[20,40,60].map(h=>{const x=v.results[String(h)];const list=(title,items)=>"<div class='panel'><h3>"+title+"</h3><table><thead><tr><th>Ticker</th><th class='n'>Score</th><th class='n'>Rendimento futuro</th></tr></thead><tbody>"+items.map(a=>"<tr><td>"+a.t+"</td><td class='n'>"+f(a.score)+"</td><td class='n "+cls(a.forward_return)+"'>"+signed(a.forward_return)+"%</td></tr>").join("")+"</tbody></table></div>";return "<section><h2>Orizzonte +"+h+"</h2><div class='lists'>"+list("Top 20 base",x.top20_base)+list("Top 20 BIG",x.top20_big)+"</div></section>"}).join("");
+}).catch(()=>{$("meta").textContent="Risultati non ancora disponibili. Esegui il workflow Aggiorna BIGCHATGPT sul branch sperimentale con classifica=true.";$("metrics").innerHTML="<tr><td colspan='9'>Nessun test fuori campione pubblicato.</td></tr>"});
+</script>
+</body></html>
