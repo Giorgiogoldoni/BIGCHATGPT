@@ -202,7 +202,7 @@ def calculate(instrument, df, events, meta):
         "roc20": round(momentum[20], 2), "roc40": round(momentum[40], 2), "roc60": round(momentum[60], 2),
         "rsi14": round(rsi_last, 1), "adx14": round(adx_last, 1), "atr_pct": round(atr_pct, 2),
         "signal_ages": signal_ages, "edge": {str(h): edge[h] for h in ORIZZONTI},
-        "confidence": confidence, "status": status, "eligible": eligible,
+        "coverage": confidence, "status": status, "eligible": eligible,
     }
 
 
