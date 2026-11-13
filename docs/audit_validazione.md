@@ -3,13 +3,18 @@
 Data revisione: 2026-11-13  
 Ambito: revisione statica del codice presente nel repository BIGCHATGPT. Non sono stati modificati i motori né sono stati eseguiti test quantitativi su tutti gli ETF.
 
+## Stato delle correzioni
+
+- **Look-ahead ZigZag/SMR:** corretto nel codice il 13/11/2026. I pivot ora riportano anche la barra di conferma e il Super Mean Reversion li rende disponibili solo da quella barra. Correzione da sottoporre a test e ricalcolo dei segnali.
+- **Indipendenza della classifica:** corretto nel codice il 13/11/2026. I run ordinari di BIGCHATGPT ora recuperano la classifica dal proprio sito, non più da BIG originale. Da verificare con un'esecuzione del workflow.
+
 ## Sintesi
 
 La classifica attuale è un'analisi descrittiva dei rendimenti successivi ai segnali, non un backtest di portafoglio. È utile come prima esplorazione, ma l'etichetta "affidabile" non deve ancora essere interpretata come prova statistica sufficiente per selezionare o acquistare ETF.
 
 ## Rilievi da risolvere, in ordine di priorità
 
-### 1. Possibile look-ahead nel Super Mean Reversion — priorità critica
+### 1. Look-ahead nel Super Mean Reversion — corretto, da testare
 
 File: `scripts/az_engine.py`, funzioni `calc_zigzag()` e `az_serie()`.
 
@@ -56,7 +61,7 @@ File: `scripts/systems.py`.
 
 Alcuni ingressi sono ordini stop attivati da massimi/minimi giornalieri e simulati al prezzo stop o all'apertura in caso di gap: è una scelta sensata come prima approssimazione, ma va verificata su barre OHLC e con casi ambigui intraday. Inoltre `MINTICK = 0.01` è fisso per strumenti e borse differenti; non rappresenta necessariamente il tick minimo negoziabile di ogni ETF/ETC.
 
-### 7. Il clone recupera ancora la classifica dal sito BIG originale — priorità alta per l'indipendenza
+### 7. Recupero della classifica dal sito originale — corretto, da verificare
 
 File: `scripts/build.py`, costante `LIVE` e funzione `recupera_classifica()`.
 
