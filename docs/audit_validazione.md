@@ -1,12 +1,13 @@
 # BIGCHATGPT — audit iniziale della validazione
 
 Data revisione: 2026-11-13  
-Ambito: revisione statica del codice presente nel repository BIGCHATGPT. Non sono stati modificati i motori né sono stati eseguiti test quantitativi su tutti gli ETF.
+Ambito: revisione statica e controlli automatici sul codice presente nel repository BIGCHATGPT. Non sono stati eseguiti test quantitativi completi su tutti gli ETF.
 
 ## Stato delle correzioni
 
-- **Look-ahead ZigZag/SMR:** corretto nel codice il 13/11/2026. I pivot ora riportano anche la barra di conferma e il Super Mean Reversion li rende disponibili solo da quella barra. Correzione da sottoporre a test e ricalcolo dei segnali.
-- **Indipendenza della classifica:** corretto nel codice il 13/11/2026. I run ordinari di BIGCHATGPT ora recuperano la classifica dal proprio sito, non più da BIG originale. Da verificare con un'esecuzione del workflow.
+- **Look-ahead ZigZag/SMR:** corretto il 13/11/2026; il test sintetico di causalita' e' passato nel workflow del 13/11/2026. Resta da verificare su casi storici reali e con test specifici del pivot.
+- **Indipendenza della classifica:** corretto il 13/11/2026; un'esecuzione del workflow ha completato download, calcolo e deploy di BIGCHATGPT senza ricalcolare la classifica. Il sito clone ha pubblicato i propri dati.
+- **Priorita' Core BUY3/BUY2:** difetto individuato e corretto il 13/11/2026; aggiunto test di regressione dedicato, in attesa di esecuzione nel workflow.
 
 ## Sintesi
 
@@ -67,6 +68,13 @@ File: `scripts/build.py`, costante `LIVE` e funzione `recupera_classifica()`.
 
 Nei run in cui `CLASSIFICA=0`, BIGCHATGPT scarica `classifica.json` e `classifica_sintesi.json` da `https://giorgiogoldoni.github.io/big/data/`, cioè dal sito BIG originale. Quindi il clone è separato come repository e sito, ma non è ancora completamente indipendente nei dati della classifica. Va modificato in modo che BIGCHATGPT conservi e riutilizzi la propria classifica, senza leggere quella di BIG.
 
+
+### 8. BUY3 del sistema Core irraggiungibile — corretto, test dedicato in attesa
+
+File: `scripts/core_engine.py`, funzione `calc_segnale_array()`.
+
+La condizione BUY2 (prezzo sopra KAMA e almeno 2 barre sopra) veniva verificata prima della BUY3. Poiche' ogni BUY3 soddisfa anche le condizioni meno restrittive di BUY2, il ramo BUY3 non poteva essere raggiunto. Il controllo e' stato riordinato: BUY1, poi BUY3, poi BUY2. E' stato aggiunto un test che verifica entrambe le uscite su casi costruiti appositamente; deve ancora essere eseguito nel workflow prima di considerare la correzione verificata.
+
 ## Piano di lavoro proposto
 
 1. Correggere il look-ahead ZigZag/SMR e aggiungere test che dimostrino che una barra passata non cambia quando si aggiungono barre future.
@@ -93,4 +101,4 @@ Il test:
 
 Criterio: un segnale gia' emesso non deve cambiare soltanto perche' sono state aggiunte barre successive. Se il test fallisce, il workflow si ferma prima della pubblicazione.
 
-**Stato:** test aggiunto al workflow, non ancora eseguito. Il superamento del test e' un controllo di causalita' su dati sintetici, non una prova di redditivita' o di robustezza statistica.
+**Stato:** il workflow del 13/11/2026 ha eseguito con successo i due test iniziali: invariabilita' dei segnali passati sui prefissi sintetici e registrazione dei 12 sistemi. Successivamente e' stato aggiunto un terzo test di regressione per BUY2/BUY3, che deve ancora essere eseguito. Il superamento dei test sintetici non e' una prova di redditivita' o di robustezza statistica.
