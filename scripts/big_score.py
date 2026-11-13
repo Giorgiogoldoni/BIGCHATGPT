@@ -108,6 +108,7 @@ def build(score_payload, rank_payload):
         "method": "score_base_plus_20pct_BIG_signal_quality",
         "tilt": TILT,
         "horizons": list(HORIZONS),
+        "min_bars_validation": score_payload.get("min_bars_validation"),
         "rows": rows,
     }
 
