@@ -19,7 +19,7 @@ INVERSO = re.compile(r"-\s?\d\s?X|\bINVERSE\b|\bBEAR\b|(DAILY|DLY).*\bSHORT\b|\b
 BATCH, PAUSA, MIN_BARRE = 40, 3, 60
 CLASSIFICA = os.environ.get("CLASSIFICA") == "1"      # run settimanale: scarica 5 anni e ricalcola la classifica
 PERIODO = "5y" if CLASSIFICA else "2y"
-LIVE = "https://giorgiogoldoni.github.io/big/data/"
+LIVE = "https://giorgiogoldoni.github.io/BIGCHATGPT/data/"
 
 
 def carica_universo():
