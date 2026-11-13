@@ -57,7 +57,8 @@ header,.bar,.note,.wrap{padding:12px 18px}header{padding-bottom:4px}h1{font-size
 <script>
 const $=id=>document.getElementById(id);
 let DATA=null,ROWS=[];
-const fmt=(v,d=1)=>v==null?"–":(v>0?"+":"")+Number(v).toFixed(d).replace(".",",");
+const fmt=(v,d=1)=>v==null?"–":Number(v).toFixed(d).replace(".",",");
+const fmtSigned=(v,d=1)=>v==null?"–":(v>0?"+":"")+fmt(v,d);
 const cls=v=>v==null?"":v<0?"neg":"pos";
 const assetLabel=v=>({equity:"Azionario",bond:"Obbligazionario",commodity:"Materie prime",crypto:"Cripto"}[v]||v||"–");
 const turn=v=>v==null?"n.d.":v>=1000000?(v/1000000).toFixed(1).replace(".",",")+" M":v>=1000?(v/1000).toFixed(0)+" k":String(Math.round(v));
@@ -70,7 +71,7 @@ function render(){
   $("body").innerHTML=list.length?list.map((r,i)=>
     "<tr><td class='rank'>"+(i+1)+"</td><td><b>"+r.t+"</b></td><td class='name'>"+r.name+"</td><td>"+assetLabel(r.asset_class)+"</td>"+
     "<td class='n score'>"+fmt(r[h])+"</td><td class='n'>"+fmt(r.score20)+"</td><td class='n'>"+fmt(r.score40)+"</td><td class='n'>"+fmt(r.score60)+"</td>"+
-    "<td class='n "+cls(r.roc20)+"'>"+fmt(r.roc20,2)+"%</td><td class='n "+cls(r.roc40)+"'>"+fmt(r.roc40,2)+"%</td><td class='n "+cls(r.roc60)+"'>"+fmt(r.roc60,2)+"%</td>"+
+    "<td class='n "+cls(r.roc20)+"'>"+fmtSigned(r.roc20,2)+"%</td><td class='n "+cls(r.roc40)+"'>"+fmtSigned(r.roc40,2)+"%</td><td class='n "+cls(r.roc60)+"'>"+fmtSigned(r.roc60,2)+"%</td>"+
     "<td class='n'>"+fmt(r.rsi14)+"</td><td class='n'>"+fmt(r.adx14)+"</td><td class='n'>"+fmt(r.atr_pct,2)+"%</td><td class='n'>"+turn(r.turnover20)+"</td>"+
     "<td><span class='tag'>"+(r.coverage||"–")+"</span></td><td>"+(r.date||"–")+"</td></tr>"
   ).join(""):'<tr><td colspan="17" class="empty">Nessun ETF corrisponde ai filtri.</td></tr>';
