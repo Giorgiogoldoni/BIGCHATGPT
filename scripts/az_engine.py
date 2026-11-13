@@ -179,14 +179,16 @@ def calc_zigzag(high: list, low: list, atr_series: list, atr_mult: float = 4.0):
             if high[i] > tmp_max:
                 tmp_max, tmp_max_idx = high[i], i
             if pct and (low[i] - tmp_max) / tmp_max <= -pct:
-                pivots.append((tmp_max_idx, tmp_max, "H"))
+                # Il pivot diventa conoscibile solo su questa barra di conferma (i),
+                # non retroattivamente sulla barra in cui si è formato l'estremo.
+                pivots.append((tmp_max_idx, tmp_max, "H", i))
                 up_zig = False
                 tmp_min, tmp_min_idx = low[i], i
         else:
             if low[i] < tmp_min:
                 tmp_min, tmp_min_idx = low[i], i
             if pct and (high[i] - tmp_min) / tmp_min >= pct:
-                pivots.append((tmp_min_idx, tmp_min, "L"))
+                pivots.append((tmp_min_idx, tmp_min, "L", i))
                 up_zig = True
                 tmp_max, tmp_max_idx = high[i], i
     return pivots
@@ -355,14 +357,15 @@ def az_serie(df):
     high_list = high.tolist()
     low_list = low.tolist()
     zigzag_pivots = calc_zigzag(high_list, low_list, atr_series_full, ZIGZAG_ATR_MULT)
-    # ultimo pivot "H" (massimo) confermato PRIMA (o a) ciascuna barra — per il calcolo del
-    # calo reale in Super Mean Reversion, sostituisce la vecchia finestra fissa di 60 barre.
+    # Ultimo pivot "H" (massimo) disponibile da ciascuna barra. Il pivot è
+    # utilizzabile solo dalla barra di conferma, mai dalla data storica dell'estremo:
+    # così il Super Mean Reversion non può leggere informazioni future.
     ultimo_pivot_h_per_barra = [None] * len(high_list)
     _ultimo_h = None
     _pivot_iter = iter(zigzag_pivots)
     _prossimo = next(_pivot_iter, None)
     for idx in range(len(high_list)):
-        while _prossimo is not None and _prossimo[0] <= idx:
+        while _prossimo is not None and _prossimo[3] <= idx:
             if _prossimo[2] == "H":
                 _ultimo_h = _prossimo[1]
             _prossimo = next(_pivot_iter, None)
