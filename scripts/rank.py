@@ -1,5 +1,5 @@
 """Classifica dei sistemi per ETF: cosa ha fatto il prezzo dopo ogni freccia (nessuna simulazione di operazioni, costi ignorati).
-Per ogni ETF, sistema e orizzonte (5, 10, 20, 60 barre) misura: segnali, % positivi, rendimento mediano, eccesso sul rendimento mediano
+Per ogni ETF, sistema e orizzonte (5, 10, 20, 40, 60 barre) misura: segnali, % positivi, rendimento mediano, eccesso sul rendimento mediano
 dello stesso ETF in tutti i giorni, e l'eccesso nelle due meta' della storia (per vedere se regge)."""
 import json
 import numpy as np
