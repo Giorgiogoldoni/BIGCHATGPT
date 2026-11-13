@@ -123,7 +123,7 @@ def calculate(instrument, df, events, meta):
         return {"t": ticker, "name": instrument.get("n", ticker), "status": "dati_insufficienti", "eligible": False}
 
     kama = np.asarray(G.calc_kama(c.tolist()), dtype=float)
-    sar, psar_trend, _ = A.parabolic_sar(d["High"], d["Low"])
+    sar, psar_trend, _ = A.parabolic_sar(d["High"], d["Low"], d["Close"])
     adx, plus_di, minus_di = A.adx(d["High"], d["Low"], d["Close"])
     rsi = A.rsi(d["Close"], 14)
     ema20 = d["Close"].ewm(span=20, adjust=False, min_periods=20).mean().to_numpy()
@@ -139,7 +139,7 @@ def calculate(instrument, df, events, meta):
     trend += 5 * int(last >= 5 and np.isfinite(kama[last]) and np.isfinite(kama[last - 5]) and kama[last] > kama[last - 5])
     trend += 5 * int(np.isfinite(ema20[last]) and np.isfinite(ema50[last]) and ema20[last] > ema50[last])
     trend += 5 * int(np.isfinite(ema20[last]) and c[last] > ema20[last])
-    trend += 5 * int(bool(psar_trend[-1]))
+    trend += 5 * int(float(psar_trend.iloc[-1]) > 0)
     adx_last = float(adx.iloc[-1]) if np.isfinite(adx.iloc[-1]) else 0.0
     pdi_last = float(plus_di.iloc[-1]) if np.isfinite(plus_di.iloc[-1]) else 0.0
     mdi_last = float(minus_di.iloc[-1]) if np.isfinite(minus_di.iloc[-1]) else 0.0
