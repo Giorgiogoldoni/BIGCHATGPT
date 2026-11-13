@@ -75,11 +75,11 @@ File: `scripts/az_engine.py`, funzioni `calc_hurst()` e `az_serie()`.
 
 Il filtro Hurst viene stimato su 60 osservazioni, usando soltanto cinque lag (2, 4, 8, 16 e 32); la stima e' poi limitata artificialmente all'intervallo 0,1–0,9 e aggiornata ogni 5 barre, mantenendo il valore precedente nei giorni intermedi. Le soglie 0,55 per i sistemi trend e 0,45 per Mean Reversion sono quindi euristiche, non una classificazione certa del regime. Con finestre brevi e pochi lag la stima puo' essere rumorosa e instabile: puo' escludere segnali validi o ammetterne di casuali. Prima di attribuire valore predittivo al filtro, occorre misurarne la stabilita' e confrontare i risultati con e senza Hurst in walk-forward, senza scegliere le soglie sulla stessa finestra usata per valutarle.
 
-### 9. Il test di causalita' controllava gli ingressi, non ancora le uscite — esteso
+### 9. Il test di causalita' controlla ingressi e uscite — superato
 
 File: `scripts/test_causality.py`.
 
-Il primo test confrontava gli ingressi storici, ma non verificava esplicitamente che le uscite gia' avvenute (segnali di uscita e stop) restassero identiche aggiungendo barre future. E' stato aggiunto un controllo sui trade chiusi entro ciascuna data di taglio: sistema, data/prezzo di ingresso e data/prezzo/motivo di uscita devono coincidere tra serie completa e prefisso. Il test e' stato aggiunto il 13/11/2026 e deve essere eseguito nel workflow.
+Il primo test confrontava gli ingressi storici, ma non verificava esplicitamente che le uscite gia' avvenute (segnali di uscita e stop) restassero identiche aggiungendo barre future. E' stato aggiunto un controllo sui trade chiusi entro ciascuna data di taglio: sistema, data/prezzo di ingresso e data/prezzo/motivo di uscita devono coincidere tra serie completa e prefisso. Il test e' stato aggiunto il 13/11/2026 ed e' stato superato nel workflow run 43408492609.
 
 ### 8. BUY3 del sistema Core irraggiungibile — corretto, test superato
 
