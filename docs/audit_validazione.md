@@ -69,6 +69,12 @@ File: `scripts/build.py`, costante `LIVE` e funzione `recupera_classifica()`.
 Nei run in cui `CLASSIFICA=0`, BIGCHATGPT scarica `classifica.json` e `classifica_sintesi.json` da `https://giorgiogoldoni.github.io/big/data/`, cioè dal sito BIG originale. Quindi il clone è separato come repository e sito, ma non è ancora completamente indipendente nei dati della classifica. Va modificato in modo che BIGCHATGPT conservi e riutilizzi la propria classifica, senza leggere quella di BIG.
 
 
+### 9. Il test di causalita' controllava gli ingressi, non ancora le uscite — esteso
+
+File: `scripts/test_causality.py`.
+
+Il primo test confrontava gli ingressi storici, ma non verificava esplicitamente che le uscite gia' avvenute (segnali di uscita e stop) restassero identiche aggiungendo barre future. E' stato aggiunto un controllo sui trade chiusi entro ciascuna data di taglio: sistema, data/prezzo di ingresso e data/prezzo/motivo di uscita devono coincidere tra serie completa e prefisso. Il test e' stato aggiunto il 13/11/2026 e deve essere eseguito nel workflow.
+
 ### 8. BUY3 del sistema Core irraggiungibile — corretto, test dedicato in attesa
 
 File: `scripts/core_engine.py`, funzione `calc_segnale_array()`.
@@ -94,11 +100,13 @@ E' stato aggiunto `scripts/test_causality.py` e il workflow esegue il test prima
 
 Il test:
 - genera una serie OHLCV sintetica e riproducibile;
-- calcola i segnali su tutta la serie;
-- ricalcola gli stessi segnali usando soltanto i primi 250, 400, 600, 800 e 1.000 giorni;
-- confronta data, sistema e prezzo di ogni ingresso gia' maturato;
-- verifica che siano registrati esattamente 12 sistemi distinti.
+- calcola segnali e posizioni su tutta la serie;
+- ricalcola gli stessi risultati usando soltanto i primi 250, 400, 600, 800 e 1.000 giorni;
+- confronta data, sistema e prezzo degli ingressi gia' maturati;
+- confronta anche le uscite dei trade gia' chiusi entro ciascuna data di taglio;
+- verifica che siano registrati esattamente 12 sistemi distinti;
+- verifica la priorita' di BUY3 rispetto a BUY2 nel motore Core.
 
 Criterio: un segnale gia' emesso non deve cambiare soltanto perche' sono state aggiunte barre successive. Se il test fallisce, il workflow si ferma prima della pubblicazione.
 
-**Stato:** il workflow del 13/11/2026 ha eseguito con successo i due test iniziali: invariabilita' dei segnali passati sui prefissi sintetici e registrazione dei 12 sistemi. Successivamente e' stato aggiunto un terzo test di regressione per BUY2/BUY3, che deve ancora essere eseguito. Il superamento dei test sintetici non e' una prova di redditivita' o di robustezza statistica.
+**Stato:** il workflow del 13/11/2026 ha eseguito con successo i due test iniziali: invariabilita' degli ingressi passati sui prefissi sintetici e registrazione dei 12 sistemi. In seguito sono stati aggiunti test per le uscite storiche e per la priorita' BUY3/BUY2. L'intero gruppo aggiornato deve ancora essere eseguito. Il superamento dei test sintetici non e' una prova di redditivita' o di robustezza statistica.
