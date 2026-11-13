@@ -177,10 +177,12 @@ def calc_segnale_array(close, kama, er_arr, baff_arr, ao_imp_arr, sar_bull_arr, 
         rsi = rsi_arr[i] if rsi_arr[i] is not None else 50
         if sar_bull and cross <= 3 and ao_imp:
             result[i] = "BUY1"
-        elif above_kama and baff >= 2:
-            result[i] = "BUY2"
+        # BUY3 e' piu' selettiva e va valutata prima di BUY2:
+        # ogni BUY3 soddisfa anche le condizioni meno restrittive di BUY2.
         elif above_kama and er >= 0.50 and baff >= 3 and mm_align:
             result[i] = "BUY3"
+        elif above_kama and baff >= 2:
+            result[i] = "BUY2"
         elif not above_kama and not sar_bull:
             result[i] = "EXIT2"
         elif not sar_bull:
