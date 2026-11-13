@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BIGCHATGPT – Top 20 BIG potenziata</title>
+<style>
+body{margin:0;background:#fff;color:#17202a;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+header,.bar,.note,.wrap{padding:12px 18px}header{padding-bottom:4px}h1{font-size:22px;margin:0}h2{font-size:16px;margin:14px 0 6px}.sub{color:#667085;font-size:12px}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center}input,select,button,a.b{font:inherit;padding:7px 10px;border:1px solid #cbd2d9;border-radius:6px;background:#fff;color:#17202a}button,a.b{cursor:pointer;text-decoration:none}button:hover,a.b:hover{background:#f3f4f6}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:1050px}th,td{padding:7px 8px;border-bottom:1px solid #eceff2;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#fff;border-bottom:2px solid #d5dbe1;font-weight:600}
+.n{text-align:right;font-variant-numeric:tabular-nums}.pos{color:#147d45}.neg{color:#b42318}.score{font-weight:700}.muted{color:#667085}.tag{display:inline-block;border-radius:4px;background:#f0f2f5;color:#475467;padding:2px 6px;font-size:11px}
+.note{max-width:1200px;color:#475467;font-size:12px}.links{display:flex;gap:8px;flex-wrap:wrap}.rank{font-weight:700;color:#667085}.name{white-space:normal;min-width:220px}.empty{padding:24px;color:#667085}
+@media(max-width:700px){header,.bar,.note,.wrap{padding:10px 12px}h1{font-size:20px}}
+</style>
+</head>
+<body>
+<header>
+  <h1>BIGCHATGPT – Top 20 BIG potenziata</h1>
+  <div class="sub" id="meta">Caricamento score…</div>
+</header>
+<div class="bar">
+  <input id="q" placeholder="Cerca ticker, nome, ISIN" size="24">
+  <select id="horizon">
+    <option value="score_big">Score BIG complessivo 20/40/60</option>
+    <option value="score_big20">Orizzonte +20 sedute</option>
+    <option value="score_big40">Orizzonte +40 sedute</option>
+    <option value="score_big60">Orizzonte +60 sedute</option>
+  </select>
+  <button id="refresh">Aggiorna vista</button>
+  <span class="sub" id="count"></span>
+  <div class="links">
+    <a class="b" href="top20.html">Top 20 base</a>
+    <a class="b" href="classifica.html">Dettaglio sistemi</a>
+  </div>
+</div>
+<div class="note" id="method">
+  <b>Score BIG sperimentale 0–100</b>: parte dallo score tecnico base e lo corregge fino a ±10 punti in base alla qualità storica dei sistemi BIG attivi sull’ETF. La qualità combina eccesso di rendimento, percentuale di segnali positivi, stabilità nelle due metà dello storico e numerosità del campione. Ogni famiglia pesa uguale, per evitare che i sei sistemi Trend dominino il risultato. I segnali più recenti pesano maggiormente. Se non c’è un segnale BIG recente, il punteggio resta uguale allo score base.
+  È una classifica sperimentale: non è ancora dimostrato che migliori i risultati futuri. I test walk-forward sono il passaggio necessario.
+</div>
+<div class="wrap">
+  <table>
+    <thead><tr>
+      <th>#</th><th>Ticker</th><th>Strumento</th><th>Classe</th><th class="n">Score</th>
+      <th class="n">+20</th><th class="n">+40</th><th class="n">+60</th>
+      <th class="n">ROC 20</th><th class="n">ROC 40</th><th class="n">ROC 60</th>
+      <th class="n">RSI</th><th class="n">ADX</th><th class="n">ATR %</th><th class="n">Turnover 20g</th>
+      <th>Copertura storico</th><th>Ultima barra</th>
+    </tr></thead>
+    <tbody id="body"><tr><td colspan="17" class="empty">Lettura dei dati…</td></tr></tbody>
+  </table>
+</div>
+<div class="note">
+  <b>Perimetro:</b> Top 20 dei soli ETF non a leva e non inversi, con almeno 230 barre storiche. Cripto e strumenti emessi nel 2026 sono esclusi dalla validazione, ma non vengono cancellati dall’universo BIG. Gli altri strumenti restano consultabili nell’elenco generale.
+  <br><b>Avvertenze:</b> il turnover è una stima nominale (prezzo × volume) nella valuta della quotazione; non misura lo spread. La classifica è un filtro tecnico da approfondire prima di qualsiasi operazione.
+</div>
+<script>
+const $=id=>document.getElementById(id);
+let DATA=null,ROWS=[];
+const fmt=(v,d=1)=>v==null?"–":Number(v).toFixed(d).replace(".",",");
+const fmtSigned=(v,d=1)=>v==null?"–":(v>0?"+":"")+fmt(v,d);
+const cls=v=>v==null?"":v<0?"neg":"pos";
+const assetLabel=v=>({equity:"Azionario",bond:"Obbligazionario",commodity:"Materie prime",crypto:"Cripto"}[v]||v||"–");
+function activeSystems(r,h){const k=h==="score_big20"?"20":h==="score_big40"?"40":h==="score_big60"?"60":"20";const a=(((r.big_signal_detail||{})[k]||{}).active)||[];return a.length?a.map(x=>x.id+" ("+x.age+"g · "+fmt(x.quality)+")").join(", "):"–"}
+const turn=v=>v==null?"n.d.":v>=1000000?(v/1000000).toFixed(1).replace(".",",")+" M":v>=1000?(v/1000).toFixed(0)+" k":String(Math.round(v));
+function render(){
+  if(!DATA)return;
+  const h=$("horizon").value,q=$("q").value.trim().toLowerCase();
+  const list=ROWS.filter(r=>!q||(r.t+" "+r.name+" "+(r.isin||"")).toLowerCase().includes(q))
+    .sort((a,b)=>(b[h]??-1)-(a[h]??-1)).slice(0,20);
+  $("count").textContent=list.length+" strumenti mostrati · "+ROWS.length+" ammessi";
+  $("body").innerHTML=list.length?list.map((r,i)=>
+    "<tr><td class='rank'>"+(i+1)+"</td><td><b>"+r.t+"</b></td><td class='name'>"+r.name+"</td><td>"+assetLabel(r.asset_class)+"</td>"+
+    "<td class='n score'>"+fmt(r[h])+"</td><td class='n'>"+fmt(r.score_big20)+"</td><td class='n'>"+fmt(r.score_big40)+"</td><td class='n'>"+fmt(r.score_big60)+"</td><td>"+activeSystems(r,h)+"</td>"+
+    "<td class='n "+cls(r.roc20)+"'>"+fmtSigned(r.roc20,2)+"%</td><td class='n "+cls(r.roc40)+"'>"+fmtSigned(r.roc40,2)+"%</td><td class='n "+cls(r.roc60)+"'>"+fmtSigned(r.roc60,2)+"%</td>"+
+    "<td class='n'>"+fmt(r.rsi14)+"</td><td class='n'>"+fmt(r.adx14)+"</td><td class='n'>"+fmt(r.atr_pct,2)+"%</td><td class='n'>"+turn(r.turnover20)+"</td>"+
+    "<td><span class='tag'>"+(r.coverage||"–")+"</span></td><td>"+(r.date||"–")+"</td></tr>"
+  ).join(""):'<tr><td colspan="17" class="empty">Nessun ETF corrisponde ai filtri.</td></tr>';
+}
+fetch("data/score_big.json").then(r=>{if(!r.ok)throw new Error("score BIG non disponibile");return r.json()}).then(d=>{
+  DATA=d;ROWS=(d.rows||[]).filter(r=>r.eligible===true);
+  $("meta").textContent="Calcolato "+d.generated+" · storico "+(d.period||"n.d.")+" · "+ROWS.length+" ETF ammessi · soglia "+d.min_bars_validation+" barre";
+  render();
+}).catch(()=>{$("meta").textContent="Score non ancora disponibile: avvia il workflow BIGCHATGPT da GitHub Actions.";$("body").innerHTML='<tr><td colspan="17" class="empty">Esegui il workflow “Aggiorna BIGCHATGPT” per generare data/score_big.json.</td></tr>'});
+["q","horizon"].forEach(id=>$(id).addEventListener("input",render));
+$("refresh").onclick=render;
+</script>
+</body>
+</html>
