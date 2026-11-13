@@ -202,10 +202,10 @@ def calculate(instrument, df, events, meta):
     }
 
 
-def write(data_dir, rows, generated):
+def write(data_dir, rows, generated, period='2y'):
     rows = sorted(rows, key=lambda x: x.get("score", -1), reverse=True)
     payload = {
-        "generated": generated, "horizons": list(ORIZZONTI),
+        "generated": generated, "period": period, "horizons": list(ORIZZONTI),
         "min_bars_validation": MIN_BARS_VALIDATION,
         "weights": {"trend": 25, "momentum": 20, "strength": 15, "signals": 20, "risk": 10, "historical_edge": 5, "liquidity": 5},
         "rows": rows,
