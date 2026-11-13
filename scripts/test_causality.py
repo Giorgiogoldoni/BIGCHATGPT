@@ -6,6 +6,7 @@ import numpy as np
 import pandas as pd
 
 import systems as S
+import core_engine as G
 
 
 def serie_sintetica(n=1200, seed=20261113):
@@ -60,6 +61,21 @@ class CausalityTests(unittest.TestCase):
                 msg=("Segnali storici modificati aggiungendo barre future "
                      f"(prefisso fino a {last_date})."),
             )
+
+    def test_core_can_emit_buy2_and_buy3(self):
+        # BUY3 soddisfa anche le condizioni di BUY2: deve quindi avere priorita'.
+        result = G.calc_segnale_array(
+            close=[110.0, 110.0],
+            kama=[100.0, 100.0],
+            er_arr=[0.80, 0.20],
+            baff_arr=[4, 2],
+            ao_imp_arr=[False, False],
+            sar_bull_arr=[True, True],
+            cross_arr=[10, 10],
+            mm_arr=[True, False],
+            rsi_arr=[50, 50],
+        )
+        self.assertEqual(result, ["BUY3", "BUY2"])
 
     def test_all_twelve_systems_are_registered(self):
         ids = [s["id"] for s in S.SYSTEMS]
