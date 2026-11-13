@@ -16,6 +16,7 @@ EXCLUDED_2026 = {
 }
 CRYPTO_TICKERS = {"ASUI.MI", "ATAO.MI", "CANTN.MI", "CBTC.MI", "HDRA.MI", "MORPH.MI", "SYRUP.MI", "WETH.MI"}
 NONSTANDARD_TICKERS = {"EUUS.MI"}  # esposizione valutaria long USD/short EUR, non ETF tradizionale
+ASSET_CLASS_OVERRIDES = {"SXRH.DE": "bond", "FEDF.MI": "bond"}
 FAMILIES = {
     "Trend": {"core", "azb", "sbb", "psar", "adx", "ema"},
     "Momentum": {"mom"},
@@ -193,7 +194,7 @@ def calculate(instrument, df, events, meta):
     confidence = "alta" if n >= 450 and min(counts) >= 5 else "media" if n >= MIN_BARS_VALIDATION and sum(v >= 3 for v in counts) >= 2 else "bassa"
     return {
         "t": ticker, "name": instrument.get("n", ticker), "isin": instrument.get("i"),
-        "issuer": instrument.get("e"), "type": instrument.get("tp"), "asset_class": instrument.get("ac"),
+        "issuer": instrument.get("e"), "type": instrument.get("tp"), "asset_class": ASSET_CLASS_OVERRIDES.get(ticker, instrument.get("ac")),
         "price": round(float(c[last]), 4), "date": str(d.index[-1].date()), "bars": n,
         "score20": scores[20], "score40": scores[40], "score60": scores[60], "score": overall,
         "trend": trend, "strength": strength, "signals": round(signal_points, 1), "risk": risk,
