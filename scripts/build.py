@@ -6,6 +6,7 @@ import pandas as pd
 import yfinance as yf
 import systems as S
 import rank
+import score as SC
 import mercato as M
 from issuers import issuer
 
@@ -42,7 +43,9 @@ def seleziona(strumenti):
 
 def pulisci(d):
     if d is None or len(d) == 0: return None
-    d = d[["Open", "High", "Low", "Close", "Volume"]].dropna(subset=["Open", "High", "Low", "Close"]).copy()
+    cols = ["Open", "High", "Low", "Close", "Volume"]
+    if "Adj Close" in d.columns: cols.append("Adj Close")
+    d = d[cols].dropna(subset=["Open", "High", "Low", "Close"]).copy()
     if getattr(d.index, "tz", None) is not None: d.index = d.index.tz_localize(None)
     d.index = pd.to_datetime(d.index).normalize()
     d = d[~((d["Volume"].fillna(0) == 0) & (d["High"] == d["Low"]))]      # barre piatte senza scambi (Yahoo): scartate
@@ -80,13 +83,18 @@ def scarica(tickers):
 def scrivi(universo, dati):
     CH.mkdir(parents=True, exist_ok=True)
     gen = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    righe, errori, rank_rows, merc_rows = [], [], [], []
+    righe, errori, rank_rows, merc_rows, score_rows = [], [], [], [], []
     for u in universo:
         d = dati.get(u["t"])
         if d is None: errori.append(u["t"]); continue
         full = d; d = full[full.index >= full.index[-1] - pd.DateOffset(years=2)]   # grafici: ultimi 2 anni
+        analisi_df = full if CLASSIFICA else d
         try:
-            ev, meta = S.calcola(full if CLASSIFICA else d)
+            ev, meta = S.calcola(analisi_df)
+            try:
+                score_rows.append(SC.calculate(u, analisi_df, ev, meta))
+            except Exception as score_error:
+                print("ERRORE score", u["t"], repr(score_error)[:100])
             if CLASSIFICA:
                 rank_rows.append(rank.riga(u["t"], full, ev))
                 ev = [e for e in ev if e[0] >= str(d.index[0].date())]
@@ -110,6 +118,7 @@ def scrivi(universo, dati):
     (DATA / "index.json").write_text(json.dumps(dict(gen=gen, sistemi=sistemi, righe=righe), separators=(",", ":")), encoding="utf-8")
     (DATA / "errori.json").write_text(json.dumps(errori), encoding="utf-8")
     M.scrivi(DATA, merc_rows, gen)
+    SC.write(DATA, score_rows, gen)
     print("titoli con dati:", len(righe), "| senza dati:", len(errori))
     if CLASSIFICA: rank.scrivi(DATA, rank_rows, gen)
 
