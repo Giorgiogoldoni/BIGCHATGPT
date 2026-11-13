@@ -1,0 +1,51 @@
+name: Aggiorna BIGCHATGPT
+
+on:
+  workflow_dispatch:
+    inputs:
+      classifica:
+        description: 'Ricalcola anche la classifica (5 anni, piu lento)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: bigchatgpt
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    env:
+      CLASSIFICA: ${{ (github.event.schedule == '0 6 * * 6' || inputs.classifica) && '1' || '0' }}
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Dipendenze
+        run: pip install pandas numpy yfinance reportlab
+      - name: Scarica dati e calcola segnali
+        run: python build.py
+        working-directory: scripts
+      - name: Regole PDF
+        run: python make_pdf.py
+        working-directory: scripts
+      - name: Prepara il sito
+        run: |
+          mkdir _site
+          cp index.html grafico.html classifica.html mercato.html _site/
+          cp -r data _site/data
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4
