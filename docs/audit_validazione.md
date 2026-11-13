@@ -79,3 +79,18 @@ Nei run in cui `CLASSIFICA=0`, BIGCHATGPT scarica `classifica.json` e `classific
 ## Regola prudenziale
 
 Fino al completamento dei controlli, le etichette "affidabile", "miglior sistema" e i guadagni mostrati da BIG vanno letti come risultati storici esplorativi, non come raccomandazioni d'investimento né come rendimenti attesi.
+
+## Nuovo controllo automatico di causalita' — 13/11/2026
+
+E' stato aggiunto `scripts/test_causality.py` e il workflow esegue il test prima di scaricare i dati e pubblicare il sito.
+
+Il test:
+- genera una serie OHLCV sintetica e riproducibile;
+- calcola i segnali su tutta la serie;
+- ricalcola gli stessi segnali usando soltanto i primi 250, 400, 600, 800 e 1.000 giorni;
+- confronta data, sistema e prezzo di ogni ingresso gia' maturato;
+- verifica che siano registrati esattamente 12 sistemi distinti.
+
+Criterio: un segnale gia' emesso non deve cambiare soltanto perche' sono state aggiunte barre successive. Se il test fallisce, il workflow si ferma prima della pubblicazione.
+
+**Stato:** test aggiunto al workflow, non ancora eseguito. Il superamento del test e' un controllo di causalita' su dati sintetici, non una prova di redditivita' o di robustezza statistica.
