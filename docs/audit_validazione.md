@@ -155,3 +155,10 @@ Il testo di `rank.py` menziona 9 sistemi, mentre il registro attuale ne contiene
 3. Correggere e documentare il calcolo statistico, includendo confronti multipli e dipendenza temporale.
 4. Preparare una serie di rendimento total-return per la valutazione, mantenendo coerenti i prezzi d'esecuzione.
 5. Solo dopo, passare a test walk-forward e backtest operativo separati.
+
+
+### Correzione PSAR — 13/11/2026 (in attesa di workflow)
+
+E' stata rimossa la dipendenza della direzione iniziale del Parabolic SAR dalla chiusura della seconda barra: la barra zero ora parte da uno stato rialzista convenzionale, usando soltanto massimo e minimo della prima barra. E' stato aggiunto un test che cambia la chiusura futura e verifica che i valori PSAR della barra zero restino invariati.
+
+**Stato:** codice e test sono stati aggiornati, ma questa nuova modifica non e' ancora stata eseguita nel workflow GitHub Actions. Fino al superamento del prossimo workflow, la correzione resta non verificata automaticamente.
