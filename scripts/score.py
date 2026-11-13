@@ -139,7 +139,7 @@ def calculate(instrument, df, events, meta):
     trend += 5 * int(last >= 5 and np.isfinite(kama[last]) and np.isfinite(kama[last - 5]) and kama[last] > kama[last - 5])
     trend += 5 * int(np.isfinite(ema20[last]) and np.isfinite(ema50[last]) and ema20[last] > ema50[last])
     trend += 5 * int(np.isfinite(ema20[last]) and c[last] > ema20[last])
-    trend += 5 * int(c[last] > float(sar.iloc[-1]))
+    trend += 5 * int(c[last] > float(sar[-1]))
     adx_last = float(adx.iloc[-1]) if np.isfinite(adx.iloc[-1]) else 0.0
     pdi_last = float(plus_di.iloc[-1]) if np.isfinite(plus_di.iloc[-1]) else 0.0
     mdi_last = float(minus_di.iloc[-1]) if np.isfinite(minus_di.iloc[-1]) else 0.0
