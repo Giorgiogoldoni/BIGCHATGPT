@@ -8,6 +8,16 @@ class BigScoreTests(unittest.TestCase):
     def test_rank_includes_40_session_horizon(self):
         self.assertEqual(rank.ORIZZONTI, (5, 10, 20, 40, 60))
 
+    def test_rank_exposes_non_overlapping_signal_statistics(self):
+        import numpy as np
+        close = np.arange(1.0, 301.0)
+        base = {20: (0.02, 0.02, 0.02, 0.02)}
+        signals = [(i, float(close[i])) for i in range(10, 260, 10)]
+        stats = rank.stat_coppia(close, base, 20, signals, 150)
+        self.assertEqual(len(stats), 17)
+        self.assertGreaterEqual(stats[9], 5)
+        self.assertIsNotNone(stats[12])
+
     def test_requires_minimum_sample_and_two_halves(self):
         self.assertIsNone(system_quality([9, 70, 3, 2, 1, 1, 5, 4, 2, 4, 2, 70, 2, 1, 1, 2, 2]))
         self.assertIsNone(system_quality([20, 70, 3, 2, None, 1, 10, 10, 2, 8, 3, 70, 3, None, 1, 4, 4]))
