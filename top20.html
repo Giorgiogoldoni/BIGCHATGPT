@@ -41,13 +41,13 @@ header,.bar,.note,.wrap{padding:12px 18px}header{padding-bottom:4px}h1{font-size
 <div class="wrap">
   <table>
     <thead><tr>
-      <th>#</th><th>Ticker</th><th>Strumento</th><th class="n">Score</th>
+      <th>#</th><th>Ticker</th><th>Strumento</th><th>Classe</th><th class="n">Score</th>
       <th class="n">+20</th><th class="n">+40</th><th class="n">+60</th>
       <th class="n">ROC 20</th><th class="n">ROC 40</th><th class="n">ROC 60</th>
-      <th class="n">RSI</th><th class="n">ADX</th><th class="n">ATR %</th>
+      <th class="n">RSI</th><th class="n">ADX</th><th class="n">ATR %</th><th class="n">Turnover 20g</th>
       <th>Confidenza</th><th>Ultima barra</th>
     </tr></thead>
-    <tbody id="body"><tr><td colspan="15" class="empty">Lettura dei dati…</td></tr></tbody>
+    <tbody id="body"><tr><td colspan="17" class="empty">Lettura dei dati…</td></tr></tbody>
   </table>
 </div>
 <div class="note">
@@ -59,6 +59,8 @@ const $=id=>document.getElementById(id);
 let DATA=null,ROWS=[];
 const fmt=(v,d=1)=>v==null?"–":(v>0?"+":"")+Number(v).toFixed(d).replace(".",",");
 const cls=v=>v==null?"":v<0?"neg":"pos";
+const assetLabel=v=>({equity:"Azionario",bond:"Obbligazionario",commodity:"Materie prime",crypto:"Cripto"}[v]||v||"–");
+const turn=v=>v==null?"n.d.":v>=1000000?(v/1000000).toFixed(1).replace(".",",")+" M":v>=1000?(v/1000).toFixed(0)+" k":String(Math.round(v));
 function render(){
   if(!DATA)return;
   const h=$("horizon").value,q=$("q").value.trim().toLowerCase();
@@ -69,7 +71,7 @@ function render(){
     "<tr><td class='rank'>"+(i+1)+"</td><td><b>"+r.t+"</b></td><td class='name'>"+r.name+"</td>"+
     "<td class='n score'>"+fmt(r[h])+"</td><td class='n'>"+fmt(r.score20)+"</td><td class='n'>"+fmt(r.score40)+"</td><td class='n'>"+fmt(r.score60)+"</td>"+
     "<td class='n "+cls(r.roc20)+"'>"+fmt(r.roc20,2)+"%</td><td class='n "+cls(r.roc40)+"'>"+fmt(r.roc40,2)+"%</td><td class='n "+cls(r.roc60)+"'>"+fmt(r.roc60,2)+"%</td>"+
-    "<td class='n'>"+fmt(r.rsi14)+"</td><td class='n'>"+fmt(r.adx14)+"</td><td class='n'>"+fmt(r.atr_pct,2)+"%</td>"+
+    "<td class='n'>"+fmt(r.rsi14)+"</td><td class='n'>"+fmt(r.adx14)+"</td><td class='n'>"+fmt(r.atr_pct,2)+"%</td><td class='n'>"+turn(r.turnover20)+"</td>"+
     "<td><span class='tag'>"+(r.confidence||"–")+"</span></td><td>"+(r.date||"–")+"</td></tr>"
   ).join(""):'<tr><td colspan="15" class="empty">Nessun ETF corrisponde ai filtri.</td></tr>';
 }
