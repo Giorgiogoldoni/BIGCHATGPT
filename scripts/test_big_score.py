@@ -1,9 +1,13 @@
 import unittest
 
+import rank
 from big_score import build, system_quality
 
 
 class BigScoreTests(unittest.TestCase):
+    def test_rank_includes_40_session_horizon(self):
+        self.assertEqual(rank.ORIZZONTI, (5, 10, 20, 40, 60))
+
     def test_requires_minimum_sample_and_two_halves(self):
         self.assertIsNone(system_quality([9, 70, 3, 2, 1, 1, 5, 4, 2]))
         self.assertIsNone(system_quality([20, 70, 3, 2, None, 1, 10, 10, 2]))
