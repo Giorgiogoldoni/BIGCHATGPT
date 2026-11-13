@@ -74,13 +74,13 @@ function render(){
     "<td class='n "+cls(r.roc20)+"'>"+fmtSigned(r.roc20,2)+"%</td><td class='n "+cls(r.roc40)+"'>"+fmtSigned(r.roc40,2)+"%</td><td class='n "+cls(r.roc60)+"'>"+fmtSigned(r.roc60,2)+"%</td>"+
     "<td class='n'>"+fmt(r.rsi14)+"</td><td class='n'>"+fmt(r.adx14)+"</td><td class='n'>"+fmt(r.atr_pct,2)+"%</td><td class='n'>"+turn(r.turnover20)+"</td>"+
     "<td><span class='tag'>"+(r.coverage||"–")+"</span></td><td>"+(r.date||"–")+"</td></tr>"
-  ).join(""):'<tr><td colspan="17" class="empty">Nessun ETF corrisponde ai filtri.</td></tr>';
+  ).join(""):'<tr><td colspan="20" class="empty">Nessun ETF corrisponde ai filtri.</td></tr>';
 }
 fetch("data/score_big.json").then(r=>{if(!r.ok)throw new Error("score BIG non disponibile");return r.json()}).then(d=>{
   DATA=d;ROWS=(d.rows||[]).filter(r=>r.eligible===true);
   $("meta").textContent="Calcolato "+d.generated+" · storico "+(d.period||"n.d.")+" · "+ROWS.length+" ETF ammessi · soglia "+d.min_bars_validation+" barre";
   render();
-}).catch(()=>{$("meta").textContent="Score non ancora disponibile: avvia il workflow BIGCHATGPT da GitHub Actions.";$("body").innerHTML='<tr><td colspan="17" class="empty">Esegui il workflow “Aggiorna BIGCHATGPT” per generare data/score_big.json.</td></tr>'});
+}).catch(()=>{$("meta").textContent="Score non ancora disponibile: avvia il workflow BIGCHATGPT da GitHub Actions.";$("body").innerHTML='<tr><td colspan="20" class="empty">Esegui il workflow “Aggiorna BIGCHATGPT” per generare data/score_big.json.</td></tr>'});
 ["q","horizon"].forEach(id=>$(id).addEventListener("input",render));
 $("refresh").onclick=render;
 </script>
