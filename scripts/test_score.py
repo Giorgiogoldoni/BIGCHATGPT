@@ -74,6 +74,22 @@ class ScoreTests(unittest.TestCase):
         edge = score._historical_edge(self.df, self.events, 20)
         self.assertTrue(edge["total_return"])
 
+    def test_only_open_big_positions_count_as_active_systems(self):
+        i_open, i_closed = 300, 350
+        events = [
+            (str(self.df.index[i_open].date()), "core", "CORE BUY2", float(self.df["Close"].iloc[i_open]), "test"),
+            (str(self.df.index[i_closed].date()), "azb", "AZ BUY2", float(self.df["Close"].iloc[i_closed]), "test"),
+        ]
+        meta = {
+            "nuovo": False, "core": "HOLD",
+            "tr": [
+                ["core", str(self.df.index[i_open].date()), 100.0, None, None, None, 1.0],
+                ["azb", str(self.df.index[i_closed].date()), 100.0, str(self.df.index[-2].date()), 99.0, "exit", -1.0],
+            ],
+        }
+        result = score.calculate(self.instrument, self.df, events, meta)
+        self.assertEqual(result["system_ages"], {"core": len(self.df) - 1 - i_open})
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
