@@ -15,6 +15,7 @@ EXCLUDED_2026 = {
     "VEZU.MI", "WBLD.MI", "WDAF.MI", "WDGF.MI", "WETFE.MI",
 }
 CRYPTO_TICKERS = {"ASUI.MI", "ATAO.MI", "CANTN.MI", "CBTC.MI", "HDRA.MI", "MORPH.MI", "SYRUP.MI", "WETH.MI"}
+NONSTANDARD_TICKERS = {"EUUS.MI"}  # esposizione valutaria long USD/short EUR, non ETF tradizionale
 FAMILIES = {
     "Trend": {"core", "azb", "sbb", "psar", "adx", "ema"},
     "Momentum": {"mom"},
@@ -179,6 +180,8 @@ def calculate(instrument, df, events, meta):
         status = "escluso_cripto"
     elif ticker in EXCLUDED_2026:
         status = "escluso_emissione_2026"
+    elif ticker in NONSTANDARD_TICKERS:
+        status = "strumento_valutario"
     elif instrument.get("tp") != "ETF":
         status = "non_etf"
     elif instrument.get("lv") or instrument.get("inv"):
