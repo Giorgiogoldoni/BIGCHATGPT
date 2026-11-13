@@ -34,7 +34,7 @@ jobs:
       - name: Dipendenze
         run: pip install pandas numpy yfinance reportlab
       - name: Test causalita' dei 12 sistemi
-        run: python -m unittest test_causality.py test_score.py -v
+        run: python -m unittest test_causality.py test_score.py test_big_score.py -v
         working-directory: scripts
       - name: Scarica dati e calcola segnali
         run: python build.py
@@ -45,7 +45,7 @@ jobs:
       - name: Prepara il sito
         run: |
           mkdir _site
-          cp index.html grafico.html classifica.html mercato.html top20.html _site/
+          cp index.html grafico.html classifica.html mercato.html top20.html top20_big.html _site/
           cp -r data _site/data
       - uses: actions/upload-pages-artifact@v3
         with:
