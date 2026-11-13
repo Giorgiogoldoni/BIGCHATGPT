@@ -32,6 +32,15 @@ def _rsi_points(value):
     return 0
 
 
+def _momentum_points(roc_pct, atr_pct, horizon, weight):
+    """Punti continui per momentum corretto per la volatilita' dell'ETF."""
+    if atr_pct <= 0 or not np.isfinite(atr_pct):
+        return 0.0
+    vol = atr_pct * np.sqrt(horizon)
+    z = roc_pct / vol if vol > 0 else 0.0
+    return float(weight * min(1.0, max(0.0, (z + 1.0) / 3.0)))
+
+
 def _risk_points(atr_pct, drawdown_pct):
     if 0.3 <= atr_pct <= 2.5: atr_pts = 5
     elif 0.15 <= atr_pct < 0.3 or 2.5 < atr_pct <= 3.5: atr_pts = 4
@@ -156,7 +165,12 @@ def calculate(instrument, df, events, meta):
     scores = {}
     for horizon in ORIZZONTI:
         others = [h for h in ORIZZONTI if h != horizon]
-        momentum_points = 7 * int(momentum[horizon] > 0) + 4 * int(momentum[others[0]] > 0) + 4 * int(momentum[others[1]] > 0) + rsi_pts
+        momentum_points = (
+            _momentum_points(momentum[horizon], atr_pct, horizon, 7)
+            + _momentum_points(momentum[others[0]], atr_pct, others[0], 4)
+            + _momentum_points(momentum[others[1]], atr_pct, others[1], 4)
+            + rsi_pts
+        )
         scores[horizon] = round(trend + strength + signal_points + risk + liquidity + momentum_points + edge[horizon]["points"], 1)
     overall = round(sum(scores.values()) / len(scores), 1)
 
