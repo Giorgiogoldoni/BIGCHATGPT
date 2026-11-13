@@ -292,7 +292,7 @@ Il momentum è valutato in rapporto alla volatilità dell'ETF, non soltanto come
 
 ### Perimetro della Top 20
 
-Gli strumenti non vengono cancellati dall'universo BIG. Sono esclusi dalla Top 20 validata:
+Gli strumenti non vengono cancellati dall'universo BIG. Cripto e prodotti emessi nel 2026 mantengono il punteggio tecnico informativo, ma non ricevono calcolo di edge storico e non entrano nella Top 20 validata. Sono inoltre esclusi dalla Top 20:
 - cripto e gli ETP cripto identificati nell'audit;
 - le emissioni 2026 già elencate nella sezione sul perimetro di validazione;
 - prodotti non ETF, strumenti a leva o inversi;
