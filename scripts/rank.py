@@ -36,20 +36,21 @@ def stat_coppia(C, base, N, segnali, m):
     e2 = float(np.median(r2)) - b2 if len(r2) >= MIN_META and b2 is not None else None
     sel, last = [], -10**9                       # segnali non sovrapposti: ognuno ad almeno N barre dal precedente
     for i, x in sorted(r):
-        if i - last >= N: sel.append(x); last = i
+        if i - last >= N: sel.append((i, x)); last = i
+    sel_values = [x for _, x in sel]
     t = None
-    if len(sel) >= 5 and np.std(sel, ddof=1) > 0:
-        t = round(float((np.mean(sel) - bm) / (np.std(sel, ddof=1) / np.sqrt(len(sel)))), 1)
+    if len(sel_values) >= 5 and np.std(sel_values, ddof=1) > 0:
+        t = round(float((np.mean(sel_values) - bm) / (np.std(sel_values, ddof=1) / np.sqrt(len(sel_values)))), 1)
     # Statistiche su segnali non sovrapposti: sono quelle usate dal nuovo score BIG.
     sel1 = [x for i, x in sel if i < m]
     sel2 = [x for i, x in sel if i >= m]
-    med_sel = float(np.median(sel)) if sel else None
-    hit_sel = int(round(100 * np.mean([x > 0 for x in sel]))) if sel else None
+    med_sel = float(np.median(sel_values)) if sel_values else None
+    hit_sel = int(round(100 * np.mean([x > 0 for x in sel_values]))) if sel_values else None
     excess_sel = _p(med_sel - b0) if med_sel is not None else None
     e1_sel = _p(float(np.median(sel1)) - b1) if len(sel1) >= MIN_META and b1 is not None else None
     e2_sel = _p(float(np.median(sel2)) - b2) if len(sel2) >= MIN_META and b2 is not None else None
     return [len(r), int(round(100 * np.mean([x > 0 for _, x in r]))), _p(med), _p(med - b0), _p(e1), _p(e2), len(r1), len(r2), t,
-            len(sel), _p(med_sel), hit_sel, excess_sel, e1_sel, e2_sel, len(sel1), len(sel2)]
+            len(sel_values), _p(med_sel), hit_sel, excess_sel, e1_sel, e2_sel, len(sel1), len(sel2)]
 
 
 def migliore(st):
