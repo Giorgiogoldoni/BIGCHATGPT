@@ -69,6 +69,12 @@ File: `scripts/build.py`, costante `LIVE` e funzione `recupera_classifica()`.
 Nei run in cui `CLASSIFICA=0`, BIGCHATGPT scarica `classifica.json` e `classifica_sintesi.json` da `https://giorgiogoldoni.github.io/big/data/`, cioè dal sito BIG originale. Quindi il clone è separato come repository e sito, ma non è ancora completamente indipendente nei dati della classifica. Va modificato in modo che BIGCHATGPT conservi e riutilizzi la propria classifica, senza leggere quella di BIG.
 
 
+### 10. Filtro Hurst: stima approssimata, soglie non validate — da verificare
+
+File: `scripts/az_engine.py`, funzioni `calc_hurst()` e `az_serie()`.
+
+Il filtro Hurst viene stimato su 60 osservazioni, usando soltanto cinque lag (2, 4, 8, 16 e 32); la stima e' poi limitata artificialmente all'intervallo 0,1–0,9 e aggiornata ogni 5 barre, mantenendo il valore precedente nei giorni intermedi. Le soglie 0,55 per i sistemi trend e 0,45 per Mean Reversion sono quindi euristiche, non una classificazione certa del regime. Con finestre brevi e pochi lag la stima puo' essere rumorosa e instabile: puo' escludere segnali validi o ammetterne di casuali. Prima di attribuire valore predittivo al filtro, occorre misurarne la stabilita' e confrontare i risultati con e senza Hurst in walk-forward, senza scegliere le soglie sulla stessa finestra usata per valutarle.
+
 ### 9. Il test di causalita' controllava gli ingressi, non ancora le uscite — esteso
 
 File: `scripts/test_causality.py`.
