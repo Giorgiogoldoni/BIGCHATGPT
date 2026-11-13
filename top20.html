@@ -45,7 +45,7 @@ header,.bar,.note,.wrap{padding:12px 18px}header{padding-bottom:4px}h1{font-size
       <th class="n">+20</th><th class="n">+40</th><th class="n">+60</th>
       <th class="n">ROC 20</th><th class="n">ROC 40</th><th class="n">ROC 60</th>
       <th class="n">RSI</th><th class="n">ADX</th><th class="n">ATR %</th><th class="n">Turnover 20g</th>
-      <th>Confidenza</th><th>Ultima barra</th>
+      <th>Copertura storico</th><th>Ultima barra</th>
     </tr></thead>
     <tbody id="body"><tr><td colspan="17" class="empty">Lettura dei dati…</td></tr></tbody>
   </table>
@@ -72,7 +72,7 @@ function render(){
     "<td class='n score'>"+fmt(r[h])+"</td><td class='n'>"+fmt(r.score20)+"</td><td class='n'>"+fmt(r.score40)+"</td><td class='n'>"+fmt(r.score60)+"</td>"+
     "<td class='n "+cls(r.roc20)+"'>"+fmt(r.roc20,2)+"%</td><td class='n "+cls(r.roc40)+"'>"+fmt(r.roc40,2)+"%</td><td class='n "+cls(r.roc60)+"'>"+fmt(r.roc60,2)+"%</td>"+
     "<td class='n'>"+fmt(r.rsi14)+"</td><td class='n'>"+fmt(r.adx14)+"</td><td class='n'>"+fmt(r.atr_pct,2)+"%</td><td class='n'>"+turn(r.turnover20)+"</td>"+
-    "<td><span class='tag'>"+(r.confidence||"–")+"</span></td><td>"+(r.date||"–")+"</td></tr>"
+    "<td><span class='tag'>"+(r.coverage||"–")+"</span></td><td>"+(r.date||"–")+"</td></tr>"
   ).join(""):'<tr><td colspan="17" class="empty">Nessun ETF corrisponde ai filtri.</td></tr>';
 }
 fetch("data/score.json").then(r=>{if(!r.ok)throw new Error("score non disponibile");return r.json()}).then(d=>{
