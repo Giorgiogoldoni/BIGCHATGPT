@@ -62,6 +62,28 @@ class CausalityTests(unittest.TestCase):
                      f"(prefisso fino a {last_date})."),
             )
 
+    def test_past_exits_do_not_change_when_future_bars_are_added(self):
+        _, full_meta = S.calcola(self.df)
+        cutoffs = (250, 400, 600, 800, 1000)
+        for end in cutoffs:
+            prefix = self.df.iloc[:end]
+            _, prefix_meta = S.calcola(prefix)
+            last_date = str(prefix.index[-1].date())
+
+            def closed_by_cutoff(meta):
+                return sorted(
+                    (t[0], t[1], round(float(t[2]), 4), t[3],
+                     round(float(t[4]), 4), t[5])
+                    for t in meta["tr"]
+                    if t[3] is not None and t[3] <= last_date
+                )
+
+            self.assertEqual(
+                closed_by_cutoff(prefix_meta), closed_by_cutoff(full_meta),
+                msg=("Uscite storiche modificate aggiungendo barre future "
+                     f"(prefisso fino a {last_date})."),
+            )
+
     def test_core_can_emit_buy2_and_buy3(self):
         # BUY3 soddisfa anche le condizioni di BUY2: deve quindi avere priorita'.
         result = G.calc_segnale_array(
