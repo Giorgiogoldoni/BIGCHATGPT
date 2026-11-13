@@ -5,12 +5,12 @@ import json
 import numpy as np
 from pathlib import Path
 
-ORIZZONTI = (5, 10, 20, 60)
+ORIZZONTI = (5, 10, 20, 40, 60)
 MIN_SEGNALI = 10     # sotto questa soglia la coppia ETF-sistema non si giudica
 MIN_META = 3         # segnali minimi in ciascuna meta' per misurarla
 T_MIN = 2.0          # soglia esplorativa: non equivale a un test inferenziale completo
 REGOLE = [
-    "Si misura il rendimento della chiusura 5, 10, 20 e 60 barre dopo ogni freccia, partendo dal prezzo del segnale. Nessuna simulazione di operazioni, costi ignorati (rendimenti lordi).",
+    "Si misura il rendimento della chiusura 5, 10, 20, 40 e 60 barre dopo ogni freccia, partendo dal prezzo del segnale. Nessuna simulazione di operazioni, costi ignorati (rendimenti lordi).",
     "Eccesso = rendimento mediano dopo i segnali meno il rendimento mediano dello stesso ETF su tutti i giorni dello stesso periodo: toglie l'effetto di un ETF che sale comunque.",
     "Una coppia ETF-sistema si giudica solo con almeno %d segnali misurabili a quell'orizzonte; sotto la soglia resta 'dati insufficienti'." % MIN_SEGNALI,
     "Etichetta 'affidabile' = eccesso positivo sull'intera storia e in entrambe le meta' (almeno %d segnali ciascuna), piu' indicatore t esplorativo >= %.1f su segnali non sovrapposti. Non e' un test inferenziale completo: non corregge i confronti multipli e non elimina la dipendenza temporale." % (MIN_META, T_MIN),
