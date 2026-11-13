@@ -115,7 +115,7 @@ Il test:
 
 Criterio: un segnale gia' emesso non deve cambiare soltanto perche' sono state aggiunte barre successive. Se il test fallisce, il workflow si ferma prima della pubblicazione.
 
-**Stato:** il workflow del 13/11/2026 ha eseguito con successo i due test iniziali: invariabilita' degli ingressi passati sui prefissi sintetici e registrazione dei 12 sistemi. In seguito sono stati aggiunti test per le uscite storiche e per la priorita' BUY3/BUY2. L'intero gruppo aggiornato deve ancora essere eseguito. Il superamento dei test sintetici non e' una prova di redditivita' o di robustezza statistica.
+**Stato:** il workflow del 13/11/2026 ha eseguito con successo tutti e quattro i test presenti in quel commit: invariabilita' degli ingressi passati, invariabilita' delle uscite gia' chiuse, registrazione dei 12 sistemi e priorita' BUY3/BUY2. Successivamente e' stato aggiunto un quinto test per l'inizializzazione causale del PSAR; questo test e la correzione PSAR attendono ancora il prossimo workflow. Il superamento dei test sintetici non e' una prova di redditivita' o di robustezza statistica.
 
 
 ## Seconda revisione tecnica — 13/11/2026
@@ -130,7 +130,7 @@ Il workflow e' terminato con successo e ha pubblicato il sito. Nel log risultano
 - invariabilita' degli ingressi storici aggiungendo barre future;
 - invariabilita' delle uscite gia' chiuse aggiungendo barre future.
 
-Il run ha usato `CLASSIFICA=0`: non ha ricalcolato la classifica. Il deploy riuscito e i test di causalita' non dimostrano che i sistemi siano profittevoli o statisticamente validi. I download di alcuni ticker non sono riusciti; il build e' proseguito e ha registrato 10 ticker senza dati/calcolo nel file `data/errori.json`. Il file generato non e' presente nel repository sorgente, quindi l'elenco dei 10 ticker va recuperato dall'artefatto/log del run prima di classificarli come cessati, temporaneamente indisponibili o errori tecnici.
+Il run ha usato `CLASSIFICA=0`: non ha ricalcolato la classifica. Il deploy riuscito e i test di causalita' non dimostrano che i sistemi siano profittevoli o statisticamente validi. Il build ha elaborato 2.709 strumenti: 2.328 con dati e 381 senza dati, elencati in `data/errori.json` nell'artefatto Pages del run. Il parametro `error_count: 10` mostrato nei log appartiene alla configurazione dell'azione di deploy e non rappresenta il numero di ticker mancanti. I 381 casi non possono essere classificati automaticamente come ETF cessati: il messaggio Yahoo 'No data found' puo' indicare simbolo errato, ticker non supportato, strumento cessato o indisponibilita' del fornitore. Occorre verificare i simboli e la loro esistenza prima di decidere se correggere l'universo o mantenerli esclusi.
 
 ### Verifiche aggiuntive sul codice
 
