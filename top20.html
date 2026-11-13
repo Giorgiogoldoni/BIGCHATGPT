@@ -34,7 +34,7 @@ header,.bar,.note,.wrap{padding:12px 18px}header{padding-bottom:4px}h1{font-size
   </div>
 </div>
 <div class="note" id="method">
-  <b>Score tecnico 0–100</b>: trend 25 punti, momentum 20, forza del trend 15, confluenza dei segnali 20, rischio 10, storico dei segnali 5, liquidità 5.
+  <b>Score tecnico 0–100</b>: trend 25 punti, momentum 20 corretto per volatilità, forza del trend 15, confluenza dei segnali 20, rischio 10, storico dei segnali 5, liquidità 5.
   Il punteggio complessivo è la media semplice dei tre orizzonti. Il rendimento storico usa Adj Close quando disponibile; altrimenti usa Close.
   Lo score misura la qualità della configurazione corrente, non è una previsione di rendimento né un backtest operativo.
 </div>
@@ -77,7 +77,7 @@ function render(){
 }
 fetch("data/score.json").then(r=>{if(!r.ok)throw new Error("score non disponibile");return r.json()}).then(d=>{
   DATA=d;ROWS=(d.rows||[]).filter(r=>r.eligible===true);
-  $("meta").textContent="Calcolato "+d.generated+" · "+ROWS.length+" ETF ammessi alla selezione · soglia storica "+d.min_bars_validation+" barre";
+  $("meta").textContent="Calcolato "+d.generated+" · storico "+(d.period||"n.d.")+" · "+ROWS.length+" ETF ammessi · soglia "+d.min_bars_validation+" barre";
   render();
 }).catch(()=>{$("meta").textContent="Score non ancora disponibile: avvia il workflow BIGCHATGPT da GitHub Actions.";$("body").innerHTML='<tr><td colspan="17" class="empty">Esegui il workflow “Aggiorna BIGCHATGPT” per generare data/score.json.</td></tr>'});
 ["q","horizon"].forEach(id=>$(id).addEventListener("input",render));
