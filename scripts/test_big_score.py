@@ -9,15 +9,15 @@ class BigScoreTests(unittest.TestCase):
         self.assertEqual(rank.ORIZZONTI, (5, 10, 20, 40, 60))
 
     def test_requires_minimum_sample_and_two_halves(self):
-        self.assertIsNone(system_quality([9, 70, 3, 2, 1, 1, 5, 4, 2]))
-        self.assertIsNone(system_quality([20, 70, 3, 2, None, 1, 10, 10, 2]))
+        self.assertIsNone(system_quality([9, 70, 3, 2, 1, 1, 5, 4, 2, 4, 2, 70, 2, 1, 1, 2, 2]))
+        self.assertIsNone(system_quality([20, 70, 3, 2, None, 1, 10, 10, 2, 8, 3, 70, 3, None, 1, 4, 4]))
 
     def test_positive_stable_system_scores_above_neutral(self):
-        q = system_quality([30, 65, 4, 3, 2, 2, 15, 15, 1.5])
+        q = system_quality([30, 65, 4, 3, 2, 2, 15, 15, 1.5, 8, 3, 65, 3, 2, 2, 4, 4])
         self.assertGreater(q, 50)
 
     def test_negative_unstable_system_scores_below_neutral(self):
-        q = system_quality([30, 35, -4, -3, -2, -2, 15, 15, -1.5])
+        q = system_quality([30, 35, -4, -3, -2, -2, 15, 15, -1.5, 8, -3, 35, -3, -2, -2, 4, 4])
         self.assertLess(q, 50)
 
     def test_no_current_big_signal_preserves_base_score(self):
@@ -40,7 +40,7 @@ class BigScoreTests(unittest.TestCase):
             "system_ages": {"core": 1},
         }
         scores = {"generated": "test", "period": "5y", "rows": [base]}
-        stat = [30, 70, 5, 4, 3, 3, 15, 15, 2.0]
+        stat = [30, 70, 5, 4, 3, 3, 15, 15, 2.0, 8, 4, 70, 4, 3, 3, 4, 4]
         ranks = {"righe": [{"t": "TEST.MI", "st": {
             "20": {"core": stat}, "40": {"core": stat}, "60": {"core": stat}
         }}]}
