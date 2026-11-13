@@ -162,19 +162,6 @@ def calculate(instrument, df, events, meta):
     momentum = {h: float((c[last] / c[last - h] - 1) * 100) if n > h else 0.0 for h in ORIZZONTI}
     risk = _risk_points(atr_pct, dd20)
     liquidity, turnover20 = _liquidity_points(d)
-    edge = {h: _historical_edge(d, events, h) for h in ORIZZONTI}
-
-    scores = {}
-    for horizon in ORIZZONTI:
-        others = [h for h in ORIZZONTI if h != horizon]
-        momentum_points = (
-            _momentum_points(momentum[horizon], atr_pct, horizon, 7)
-            + _momentum_points(momentum[others[0]], atr_pct, others[0], 4)
-            + _momentum_points(momentum[others[1]], atr_pct, others[1], 4)
-            + rsi_pts
-        )
-        scores[horizon] = round(trend + strength + signal_points + risk + liquidity + momentum_points + edge[horizon]["points"], 1)
-    overall = round(sum(scores.values()) / len(scores), 1)
 
     status = "ok"
     if instrument.get("ac") == "crypto" or ticker in CRYPTO_TICKERS:
@@ -190,6 +177,25 @@ def calculate(instrument, df, events, meta):
     elif n < MIN_BARS_VALIDATION:
         status = "storico_insufficiente"
     eligible = status == "ok"
+
+    if eligible:
+        edge = {h: _historical_edge(d, events, h) for h in ORIZZONTI}
+    else:
+        edge = {h: {"n": 0, "excess": None, "hit": None, "points": 0.0,
+                    "total_return": False, "validation": "esclusa"} for h in ORIZZONTI}
+
+    scores = {}
+    for horizon in ORIZZONTI:
+        others = [h for h in ORIZZONTI if h != horizon]
+        momentum_points = (
+            _momentum_points(momentum[horizon], atr_pct, horizon, 7)
+            + _momentum_points(momentum[others[0]], atr_pct, others[0], 4)
+            + _momentum_points(momentum[others[1]], atr_pct, others[1], 4)
+            + rsi_pts
+        )
+        scores[horizon] = round(trend + strength + signal_points + risk + liquidity + momentum_points + edge[horizon]["points"], 1)
+    overall = round(sum(scores.values()) / len(scores), 1)
+
     counts = [edge[h]["n"] for h in ORIZZONTI]
     confidence = "alta" if n >= 450 and min(counts) >= 5 else "media" if n >= MIN_BARS_VALIDATION and sum(v >= 3 for v in counts) >= 2 else "bassa"
     return {
