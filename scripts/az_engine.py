@@ -160,7 +160,7 @@ def calc_zigzag(high: list, low: list, atr_series: list, atr_mult: float = 4.0):
     """ZigZag con soglia dinamica = ATR14 x atr_mult (invece di una % fissa): si adatta
     da solo alla volatilità reale di ciascun titolo (un'azione tranquilla e un ETF a
     leva 5x su materie prime avranno soglie diverse senza bisogno di tabelle manuali).
-    Ritorna la lista di pivot [(indice, prezzo, 'H'|'L'), ...] in ordine cronologico.
+    Ritorna pivot [(indice_estremo, prezzo, 'H'|'L', indice_conferma), ...] in ordine cronologico.
     """
     n = len(high)
     if n < 2:
