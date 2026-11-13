@@ -116,3 +116,42 @@ Il test:
 Criterio: un segnale gia' emesso non deve cambiare soltanto perche' sono state aggiunte barre successive. Se il test fallisce, il workflow si ferma prima della pubblicazione.
 
 **Stato:** il workflow del 13/11/2026 ha eseguito con successo i due test iniziali: invariabilita' degli ingressi passati sui prefissi sintetici e registrazione dei 12 sistemi. In seguito sono stati aggiunti test per le uscite storiche e per la priorita' BUY3/BUY2. L'intero gruppo aggiornato deve ancora essere eseguito. Il superamento dei test sintetici non e' una prova di redditivita' o di robustezza statistica.
+
+
+## Seconda revisione tecnica — 13/11/2026
+
+### Esito del primo workflow completo dopo le correzioni
+
+Run: https://github.com/Giorgiogoldoni/BIGCHATGPT/actions/runs/43408492609
+
+Il workflow e' terminato con successo e ha pubblicato il sito. Nel log risultano superati tutti e quattro i test:
+- registrazione dei 12 sistemi;
+- priorita' e raggiungibilita' di Core BUY3 e BUY2;
+- invariabilita' degli ingressi storici aggiungendo barre future;
+- invariabilita' delle uscite gia' chiuse aggiungendo barre future.
+
+Il run ha usato `CLASSIFICA=0`: non ha ricalcolato la classifica. Il deploy riuscito e i test di causalita' non dimostrano che i sistemi siano profittevoli o statisticamente validi. I download di alcuni ticker non sono riusciti; il build e' proseguito e ha registrato 10 ticker senza dati/calcolo nel file `data/errori.json`. Il file generato non e' presente nel repository sorgente, quindi l'elenco dei 10 ticker va recuperato dall'artefatto/log del run prima di classificarli come cessati, temporaneamente indisponibili o errori tecnici.
+
+### Verifiche aggiuntive sul codice
+
+- **ZigZag:** nel codice esaminato la funzione e' richiamata da `az_serie()`; i pivot sono consumati usando il quarto elemento, indice di conferma. Non sono emersi altri consumatori del vecchio formato a tre elementi nei file esaminati. La correzione impedisce al Super Mean Reversion di usare un massimo prima della barra in cui il pivot e' confermato.
+- **Parabolic SAR:** `parabolic_sar()` inizializza la direzione della barra zero usando anche la chiusura della barra uno. E' una dipendenza dal futuro per il solo valore iniziale della serie. Nel flusso attuale non appare generare un ingresso negoziabile sulla barra zero: KAMA/Hurst non sono ancora pronti e il trigger Super Best Buy richiede AO in miglioramento. Resta comunque opportuno eliminare questa dipendenza con un'inizializzazione neutra e un test dedicato, per rendere l'indicatore rigorosamente causale fin dall'inizio.
+- **Ordini PSAR e Momentum:** gli ordini stop vengono calcolati alla chiusura di una barra e possono scattare soltanto sulla barra successiva. Questa sequenza e' coerente con l'uso di dati OHLC giornalieri; restano da verificare casi di gap e ambiguita' intraday.
+- **Warm-up:** diversi indicatori hanno periodi iniziali non validi o valori di ripiego. Il test a prefissi verifica la stabilita' storica, ma non dimostra che ogni sistema eviti segnali nella fase di warm-up. Serve un test specifico sui primi valori validi.
+- **Formato ZigZag:** la modifica a quattro elementi e' letta nel consumatore presente in `az_engine.py`; prima di ulteriori riusi della funzione va mantenuto questo contratto.
+
+### Ulteriore limite della statistica t in rank.py
+
+La formula corrente calcola una t dividendo la differenza tra la media dei rendimenti dei segnali selezionati e la media di tutti i rendimenti di riferimento per l'errore standard dei soli rendimenti selezionati. Tratta quindi la media di riferimento come se fosse nota senza errore. Inoltre la selezione di finestre non sovrapposte riduce la sovrapposizione diretta, ma non garantisce indipendenza: i rendimenti possono restare correlati per regime di mercato. Infine la ricerca simultanea tra numerosi ETF, sistemi e orizzonti non e' corretta per confronti multipli. Di conseguenza `t >= 2` e l'etichetta `affidabile` sono criteri esplorativi, non un test inferenziale conclusivo.
+
+### Correzione documentale
+
+Il testo di `rank.py` menziona 9 sistemi, mentre il registro attuale ne contiene 12. Va allineato il testo visibile e va mantenuta la distinzione tra i 12 sistemi registrati e il numero di sistemi effettivamente presenti in ciascun risultato con dati sufficienti.
+
+### Prossimi passi, senza costruire ancora lo score
+
+1. Rendere causale anche l'inizializzazione del Parabolic SAR e aggiungere test di warm-up.
+2. Chiarire l'elenco dei 10 ticker segnalati dal workflow.
+3. Correggere e documentare il calcolo statistico, includendo confronti multipli e dipendenza temporale.
+4. Preparare una serie di rendimento total-return per la valutazione, mantenendo coerenti i prezzi d'esecuzione.
+5. Solo dopo, passare a test walk-forward e backtest operativo separati.
