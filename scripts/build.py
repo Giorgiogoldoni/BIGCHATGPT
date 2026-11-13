@@ -118,7 +118,7 @@ def scrivi(universo, dati):
     (DATA / "index.json").write_text(json.dumps(dict(gen=gen, sistemi=sistemi, righe=righe), separators=(",", ":")), encoding="utf-8")
     (DATA / "errori.json").write_text(json.dumps(errori), encoding="utf-8")
     M.scrivi(DATA, merc_rows, gen)
-    SC.write(DATA, score_rows, gen)
+    SC.write(DATA, score_rows, gen, PERIODO)
     print("titoli con dati:", len(righe), "| senza dati:", len(errori))
     if CLASSIFICA: rank.scrivi(DATA, rank_rows, gen)
 
