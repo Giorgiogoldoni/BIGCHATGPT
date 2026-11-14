@@ -70,9 +70,13 @@ class ScoreTests(unittest.TestCase):
         result = score.calculate(instrument, self.df, self.events, {"nuovo": False, "core": "HOLD"})
         self.assertEqual(result["asset_class"], "bond")
 
-    def test_historical_edge_uses_adjusted_close_when_available(self):
+    def test_historical_edge_excludes_dividends_even_when_adjusted_close_exists(self):
         edge = score._historical_edge(self.df, self.events, 20)
-        self.assertTrue(edge["total_return"])
+        self.assertFalse(edge["total_return"])
+        close_only = self.df.drop(columns=["Adj Close"])
+        plain = score._historical_edge(close_only, self.events, 20)
+        self.assertEqual(edge["median"], plain["median"])
+        self.assertEqual(edge["baseline_median"], plain["baseline_median"])
 
 
 if __name__ == "__main__":
