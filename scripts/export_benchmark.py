@@ -44,12 +44,12 @@ def main():
     ws = wb.active
     ws.title = "Classifica"
     headers = ["Sistema", "Uscita", "ETF", "Trade", "Vincenti %", "Media %", "Mediana %",
-               "Eccesso vs hold %", "Profit factor", "Max drawdown %", "Durata media (sedute)"]
+               "Eccesso vs hold %", "Profit factor", "Durata media (sedute)"]
     ws.append(headers)
     for x in data.get("ranking", []):
         ws.append([NAMES.get(x["system"], x["system"]), x["exit"], x.get("tickers"), x.get("trades"),
                    x.get("win_rate"), x.get("mean"), x.get("median"), x.get("mean_excess"),
-                   x.get("profit_factor"), x.get("max_drawdown"), x.get("avg_bars")])
+                   x.get("profit_factor"), x.get("avg_bars")])
     style_sheet(ws, {"A": 30, "B": 18, "C": 10, "D": 12, "E": 14, "F": 12, "G": 12,
                      "H": 18, "I": 14, "J": 18, "K": 22})
     for row in ws.iter_rows(min_row=2, min_col=5, max_col=8):
