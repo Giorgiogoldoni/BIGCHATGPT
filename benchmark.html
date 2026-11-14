@@ -21,9 +21,10 @@ th{background:#eef1f5;font-size:12px;color:#475467;position:sticky;top:0}
 <h1>Benchmark dei sistemi BIGCHATGPT</h1>
 <div class="muted">12 sistemi BIG + candidato Trend Pullback · prezzi Close non rettificati · dividendi esclusi</div>
 <div id="meta" class="note">Caricamento risultati…</div>
+<div class="bar"><a href="data/benchmark.xlsx">Scarica Excel con classifica e dettaglio per ETF</a></div>
 <div class="bar"><label>Sistema <select id="sys"><option value="">Tutti</option></select></label><label>Uscita <select id="exit"><option value="">Tutte</option></select></label></div>
-<div class="wrap"><table><thead><tr><th>Sistema</th><th>Uscita</th><th>ETF</th><th>Trade</th><th>Vincenti</th><th>Media %</th><th>Mediana %</th><th>Eccesso vs hold %</th><th>Profit factor</th><th>Durata</th></tr></thead><tbody id="rows"></tbody></table></div>
-<p class="muted">Metodo: segnale alla chiusura, ingresso all’apertura della seduta successiva; costo round-trip ipotizzato 10 punti base; operazioni aperte escluse dal confronto delle uscite originali. L’eccesso confronta ogni trade con il rendimento buy-and-hold dello stesso ETF per la stessa durata. I risultati sono storici e non costituiscono una previsione.</p>
+<div class="wrap"><table><thead><tr><th>Sistema</th><th>Uscita</th><th>ETF</th><th>Trade</th><th>Vincenti</th><th>Media %</th><th>Mediana %</th><th>Eccesso vs hold %</th><th>Profit factor</th><th>Max drawdown %</th><th>Durata</th></tr></thead><tbody id="rows"></tbody></table></div>
+<p class="muted">Metodo: segnale alla chiusura, ingresso all’apertura della seduta successiva; costo round-trip ipotizzato 10 punti base; operazioni aperte escluse dal confronto delle uscite originali. L’eccesso confronta ogni trade con il rendimento buy-and-hold dello stesso ETF per la stessa durata. I risultati sono storici e non costituiscono una previsione. La classifica aggrega i trade, non simula un portafoglio con capitale e pesi uguali: gli ETF con più segnali possono pesare di più.</p>
 </main>
 <script>
 (async()=>{
@@ -35,7 +36,7 @@ const names={mom:'Momentum',cd:'Compra dal',core:'Core BUY1/2/3',azb:'Az BUY2/3'
 [...new Set(d.ranking.map(x=>x.system))].forEach(v=>sys.add(new Option(names[v]||v,v)));
 [...new Set(d.ranking.map(x=>x.exit))].forEach(v=>ex.add(new Option(v,v)));
 function render(){const rows=d.ranking.filter(x=>(!sys.value||x.system===sys.value)&&(!ex.value||x.exit===ex.value));
-body.innerHTML=rows.map(x=>'<tr><td>'+(names[x.system]||x.system)+'</td><td>'+x.exit+'</td><td>'+x.tickers+'</td><td>'+x.trades+'</td><td>'+x.win_rate.toFixed(1)+'%</td><td>'+x.mean.toFixed(2)+'</td><td>'+x.median.toFixed(2)+'</td><td>'+x.mean_excess.toFixed(2)+'</td><td>'+(x.profit_factor??'—')+'</td><td>'+x.avg_bars+'</td></tr>').join('')||'<tr><td colspan="10">Nessun risultato per i filtri selezionati.</td></tr>'}
+body.innerHTML=rows.map(x=>'<tr><td>'+(names[x.system]||x.system)+'</td><td>'+x.exit+'</td><td>'+x.tickers+'</td><td>'+x.trades+'</td><td>'+x.win_rate.toFixed(1)+'%</td><td>'+x.mean.toFixed(2)+'</td><td>'+x.median.toFixed(2)+'</td><td>'+x.mean_excess.toFixed(2)+'</td><td>'+(x.profit_factor??'—')+'</td><td>'+(x.max_drawdown??'—')+'</td><td>'+x.avg_bars+'</td></tr>').join('')||'<tr><td colspan="11">Nessun risultato per i filtri selezionati.</td></tr>'}
 sys.onchange=render;ex.onchange=render;render();
 }catch(e){meta.innerHTML='<span class="err">'+e.message+'</span> · Eseguire la classifica quinquennale da GitHub Actions con classifica=true.'}
 })();
