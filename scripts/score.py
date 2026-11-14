@@ -69,12 +69,9 @@ def _liquidity_points(df):
 
 def _historical_edge(df, events, horizon):
     close = df["Close"].astype(float).to_numpy()
-    if "Adj Close" in df.columns and df["Adj Close"].notna().sum() >= len(df) * 0.8:
-        adj = df["Adj Close"].astype(float).fillna(df["Close"].astype(float)).to_numpy()
-        total_return = True
-    else:
-        adj = close.copy()
-        total_return = False
+    # BIG usa esclusivamente prezzi Close grezzi: dividendi esclusi in tutti i confronti.
+    adj = close.copy()
+    total_return = False
     n = len(close)
     if n <= horizon + 5:
         return {"n": 0, "excess": None, "hit": None, "points": 0.0, "total_return": total_return}
