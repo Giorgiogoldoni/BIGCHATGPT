@@ -6,7 +6,7 @@ on:
       classifica:
         description: 'Ricalcola anche la classifica (5 anni, piu lento)'
         type: boolean
-        default: false
+        default: true
 
 permissions:
   contents: read
@@ -45,7 +45,7 @@ jobs:
       - name: Prepara il sito
         run: |
           mkdir _site
-          cp index.html grafico.html classifica.html mercato.html top20.html _site/
+          cp index.html grafico.html classifica.html mercato.html top20.html benchmark.html _site/
           cp -r data _site/data
       - uses: actions/upload-pages-artifact@v3
         with:
