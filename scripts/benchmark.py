@@ -60,14 +60,18 @@ def _exit_trade(df, entry_i, entry_price, mode, atr, ema20, ema50):
     return None
 
 
-def _one_system(df, events, sid, original_map, modes, cost):
+def _one_system(df, events, sid, original_map, modes, cost, features=None):
     dates = {str(d.date()): i for i, d in enumerate(df.index)}
     close = df["Close"].to_numpy(float)
     opn = df["Open"].to_numpy(float)
-    atr = A.calc_atr_series(df["High"].tolist(), df["Low"].tolist(), df["Close"].tolist())
-    c = df["Close"].astype(float)
-    ema20 = c.ewm(span=20, adjust=False, min_periods=50).mean().to_numpy()
-    ema50 = c.ewm(span=50, adjust=False, min_periods=50).mean().to_numpy()
+    if features is None:
+        c = df["Close"].astype(float)
+        features = {
+            "atr": A.calc_atr_series(df["High"].tolist(), df["Low"].tolist(), df["Close"].tolist()),
+            "ema20": c.ewm(span=20, adjust=False, min_periods=50).mean().to_numpy(),
+            "ema50": c.ewm(span=50, adjust=False, min_periods=50).mean().to_numpy(),
+        }
+    atr, ema20, ema50 = features["atr"], features["ema20"], features["ema50"]
     selected = sorted((e for e in events if e[1] == sid), key=lambda e: e[0])
     results = []
     for mode in modes:
@@ -141,9 +145,15 @@ def ticker_benchmark(ticker, df, events, meta, cost_bps=COST_BPS):
         original_map[(t[0], t[1])] = (t[3], t[4])
     modes = ["original"] + ["chand_%.1f" % x for x in CHAND_MULTS] + ["stop_8", "ema20_50"] + ["time_%d" % x for x in TIME_EXITS]
     system_ids = [s["id"] for s in S.SYSTEMS] + ["chat_trend_pullback"]
+    c = df["Close"].astype(float)
+    features = {
+        "atr": A.calc_atr_series(df["High"].tolist(), df["Low"].tolist(), df["Close"].tolist()),
+        "ema20": c.ewm(span=20, adjust=False, min_periods=50).mean().to_numpy(),
+        "ema50": c.ewm(span=50, adjust=False, min_periods=50).mean().to_numpy(),
+    }
     out = []
     for sid in system_ids:
-        out.extend(_one_system(df, all_events, sid, original_map, modes if sid != "chat_trend_pullback" else modes[1:], cost_bps))
+        out.extend(_one_system(df, all_events, sid, original_map, modes if sid != "chat_trend_pullback" else modes[1:], cost_bps, features))
     return [{"ticker": ticker, **x} for x in out]
 
 
