@@ -129,7 +129,7 @@ def scrivi(universo, dati):
 
 def recupera_classifica():
     """Nei run giornalieri la classifica non si ricalcola: si riprende l'ultima pubblicata dal sito."""
-    for nome in ("classifica.json", "classifica_sintesi.json"):
+    for nome in ("classifica.json", "classifica_sintesi.json", "benchmark.json"):
         try:
             dati = urllib.request.urlopen(LIVE + nome, timeout=60).read(); json.loads(dati)
             (DATA / nome).write_bytes(dati); print("classifica precedente recuperata:", nome, len(dati) // 1024, "KB")
