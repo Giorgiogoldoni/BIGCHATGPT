@@ -104,6 +104,7 @@ def _one_system(df, events, sid, original_map, modes, cost):
             hold = close[exit_i] / entry - 1
             trades.append({
                 "in": str(df.index[entry_i].date()), "out": str(df.index[exit_i].date()),
+                "entry_price": round(entry, 6), "exit_price": round(exit_price, 6),
                 "bars": int(exit_i - entry_i + 1), "ret": round(net * 100, 3),
                 "gross": round(gross * 100, 3), "benchmark": round(hold * 100, 3),
                 "excess": round((net - hold) * 100, 3), "reason": reason,
