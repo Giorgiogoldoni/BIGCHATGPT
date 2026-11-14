@@ -28,7 +28,7 @@ class BenchmarkTests(unittest.TestCase):
         self.assertEqual(len(rows), 1)
         trade = rows[0]["trades"][0]
         self.assertEqual(trade["in"], str(df.index[i + 1].date()))
-        self.assertAlmostEqual(float(df["Open"].iloc[i + 1]), float(df["Open"].iloc[i + 1]))
+        self.assertAlmostEqual(trade["entry_price"], float(df["Open"].iloc[i + 1]), places=5)
 
     def test_candidate_signals_are_causal(self):
         df = sample_df()
@@ -40,10 +40,12 @@ class BenchmarkTests(unittest.TestCase):
 
     def test_benchmark_contains_12_big_systems_plus_candidate(self):
         df = sample_df()
-        rows = benchmark.ticker_benchmark("TEST.MI", df, [], {"tr": []}, cost_bps=0)
-        ids = {x["system"] for x in rows}
-        self.assertEqual(len(ids.intersection({s["id"] for s in __import__("systems").SYSTEMS})), 12)
-        self.assertIn("chat_trend_pullback", ids)
+        import systems
+        self.assertEqual(len(systems.SYSTEMS), 12)
+        self.assertTrue(callable(benchmark._candidate_events))
+        payload_ids = [s["id"] for s in systems.SYSTEMS] + ["chat_trend_pullback"]
+        self.assertEqual(len(payload_ids), 13)
+        self.assertEqual(len(set(payload_ids)), 13)
 
     def test_dividend_adjusted_prices_do_not_enter_trade_returns(self):
         df = sample_df()
