@@ -32,12 +32,15 @@ jobs:
         with:
           python-version: '3.11'
       - name: Dipendenze
-        run: pip install pandas numpy yfinance reportlab
+        run: pip install pandas numpy yfinance reportlab openpyxl
       - name: Test causalita' e benchmark sistemi
         run: python -m unittest test_causality.py test_score.py test_benchmark.py -v
         working-directory: scripts
       - name: Scarica dati e calcola segnali
         run: python build.py
+        working-directory: scripts
+      - name: Esporta benchmark Excel
+        run: python export_benchmark.py
         working-directory: scripts
       - name: Regole PDF
         run: python make_pdf.py
