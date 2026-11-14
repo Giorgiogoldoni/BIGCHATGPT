@@ -7,6 +7,7 @@ import yfinance as yf
 import systems as S
 import rank
 import score as SC
+import benchmark as BM
 import mercato as M
 from issuers import issuer
 
@@ -83,7 +84,7 @@ def scarica(tickers):
 def scrivi(universo, dati):
     CH.mkdir(parents=True, exist_ok=True)
     gen = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
-    righe, errori, rank_rows, merc_rows, score_rows = [], [], [], [], []
+    righe, errori, rank_rows, merc_rows, score_rows, benchmark_rows = [], [], [], [], [], []
     for u in universo:
         d = dati.get(u["t"])
         if d is None: errori.append(u["t"]); continue
@@ -97,6 +98,7 @@ def scrivi(universo, dati):
                 print("ERRORE score", u["t"], repr(score_error)[:100])
             if CLASSIFICA:
                 rank_rows.append(rank.riga(u["t"], full, ev))
+                benchmark_rows.extend(BM.ticker_benchmark(u["t"], full, ev, meta))
                 ev = [e for e in ev if e[0] >= str(d.index[0].date())]
                 meta["tr"] = [t for t in meta["tr"] if t[1] >= str(d.index[0].date())]
         except Exception as e:
@@ -120,7 +122,9 @@ def scrivi(universo, dati):
     M.scrivi(DATA, merc_rows, gen)
     SC.write(DATA, score_rows, gen, PERIODO)
     print("titoli con dati:", len(righe), "| senza dati:", len(errori))
-    if CLASSIFICA: rank.scrivi(DATA, rank_rows, gen)
+    if CLASSIFICA:
+        rank.scrivi(DATA, rank_rows, gen)
+        BM.write(DATA, benchmark_rows, gen, PERIODO)
 
 
 def recupera_classifica():
