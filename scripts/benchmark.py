@@ -168,16 +168,12 @@ def aggregate(rows):
             continue
         vals = np.array([t["ret"] for t in trades], dtype=float)
         wins, losses = vals[vals > 0], vals[vals < 0]
-        equity = np.cumprod(1 + vals / 100)
-        peaks = np.maximum.accumulate(np.r_[1.0, equity])
-        drawdown = np.r_[1.0, equity] / peaks - 1
         out.append({
             "system": sid, "exit": mode, "tickers": len(items), "trades": len(trades),
             "win_rate": round(float(np.mean(vals > 0)) * 100, 1),
             "mean": round(float(np.mean(vals)), 3), "median": round(float(np.median(vals)), 3),
             "mean_excess": round(float(np.mean([t["excess"] for t in trades])), 3),
             "profit_factor": round(float(wins.sum() / abs(losses.sum())), 3) if len(losses) and abs(losses.sum()) > 0 else None,
-            "max_drawdown": round(float(drawdown.min()) * 100, 2),
             "avg_bars": round(float(np.mean([t["bars"] for t in trades])), 1),
         })
     return sorted(out, key=lambda x: (x["mean_excess"], x["profit_factor"] or 0, x["trades"]), reverse=True)
