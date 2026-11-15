@@ -81,6 +81,7 @@ def scrivi(universo, dati):
     righe, errori, rank_rows, merc_rows, score_rows = [], [], [], [], []
     benchmark_rows, benchmark_forward = [], []
     reversion_rows = []
+    reversion_errors = []
     for u in universo:
         full = dati.get(u["t"])
         if full is None: errori.append(u["t"]); continue
@@ -97,7 +98,11 @@ def scrivi(universo, dati):
                 benchmark_rows.extend(result["rows"])
                 benchmark_forward.extend(result["forward"])
                 if not u["lv"] and not u["inv"]:
-                    reversion_rows.extend(RA.audit_ticker(u["t"], full, ev, meta))
+                    try:
+                        reversion_rows.extend(RA.audit_ticker(u["t"], full, ev, meta))
+                    except Exception as audit_error:
+                        reversion_errors.append(u["t"])
+                        print("ERRORE audit MR/SMR", u["t"], repr(audit_error)[:120])
                 ev = [e for e in ev if e[0] >= str(d.index[0].date())]
                 meta["tr"] = [t for t in meta["tr"] if t[1] >= str(d.index[0].date())]
         except Exception as e:
@@ -133,6 +138,7 @@ def scrivi(universo, dati):
                 "old_close_entry": "Ricostruzione delle posizioni originali BIG: ingresso al Close del segnale e uscita originale.",
                 "open_next_day": "Simulazione indipendente: ingresso all'Open successiva, uscite ricalcolate sul prezzo effettivo; MR = Bollinger superiore o Chandelier 3 ATR; SMR = Bollinger superiore o stop close-based -15%.",
             },
+            "audit_errors": reversion_errors,
             "summary": RA.aggregate_audit(reversion_rows),
             "yearly_summary": RA.aggregate_yearly_audit(reversion_rows),
             "tickers": reversion_rows,
