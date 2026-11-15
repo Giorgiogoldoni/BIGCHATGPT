@@ -35,5 +35,5 @@ jobs:
       - name: Dipendenze
         run: pip install pandas numpy
       - name: Test audit Mean Reversion
-        run: python -m unittest test_reversion_audit.py -v
+        run: python -m unittest test_causality.py test_score.py test_benchmark.py test_reversion_audit.py -v
         working-directory: scripts
