@@ -42,6 +42,9 @@ jobs:
       - name: Esporta benchmark Excel
         run: python export_benchmark.py
         working-directory: scripts
+      - name: Esporta audit MR e SMR Excel
+        run: python export_reversion_audit.py
+        working-directory: scripts
       - name: Regole PDF
         run: python make_pdf.py
         working-directory: scripts
