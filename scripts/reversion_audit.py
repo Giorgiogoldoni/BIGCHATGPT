@@ -186,33 +186,64 @@ def audit_ticker(ticker, df, events, meta, cost_bps=10.0):
     return out
 
 
+def _pooled_trade_stats(trades):
+    """Metriche aggregate sui trade effettivi; le posizioni aperte sono separate."""
+    closed = [t for t in trades if t.get("status") == "closed" and t.get("net_return_pct") is not None]
+    opened = [t for t in trades if t.get("status") == "open"]
+    vals = np.asarray([float(t["net_return_pct"]) for t in closed], dtype=float)
+    wins, losses = vals[vals > 0], vals[vals < 0]
+    open_marks = np.asarray([
+        float(t["estimated_net_mark_return_pct"]) for t in opened
+        if t.get("estimated_net_mark_return_pct") is not None
+    ], dtype=float)
+    return {
+        "pooled_closed_trades": int(len(vals)),
+        "pooled_open_positions": int(len(opened)),
+        "pooled_win_rate": round(float(np.mean(vals > 0) * 100), 2) if len(vals) else None,
+        "pooled_profit_factor": round(float(wins.sum() / abs(losses.sum())), 3)
+            if len(losses) and abs(losses.sum()) > 0 else (None if not len(wins) else "inf"),
+        "pooled_mean_net_return": round(float(np.mean(vals)), 3) if len(vals) else None,
+        "pooled_median_net_return": round(float(np.median(vals)), 3) if len(vals) else None,
+        "pooled_net_return_sum_pct": round(float(vals.sum()), 3) if len(vals) else None,
+        "open_negative_positions": int(np.sum(open_marks < 0)) if len(open_marks) else 0,
+        "open_mean_mark_return": round(float(np.mean(open_marks)), 3) if len(open_marks) else None,
+        "open_median_mark_return": round(float(np.median(open_marks)), 3) if len(open_marks) else None,
+        "open_worst_mark_return": round(float(np.min(open_marks)), 3) if len(open_marks) else None,
+    }
+
+
 def aggregate_audit(rows):
-    """Aggrega per ETF con peso uguale; evita che gli ETF con più segnali dominino."""
+    """Mediane per ticker + metriche pooled sui singoli trade, senza confondere i due livelli."""
     result = []
     for sid in ("mr", "smr"):
         items = [r for r in rows if r["system"] == sid]
-        for mode in ("old_close_entry", "open_next_day"):
+        for mode, trade_key in (("old_close_entry", "old_trades"), ("open_next_day", "trades")):
             metrics = [r[mode] for r in items if r[mode]["closed"] > 0]
             def med(key):
                 vals = [m[key] for m in metrics if isinstance(m.get(key), (int, float))]
                 return round(float(np.median(vals)), 3) if vals else None
+            pooled_trades = [t for r in items for t in r.get(trade_key, [])]
+            pooled = _pooled_trade_stats(pooled_trades)
             result.append({
                 "system": sid, "method": mode, "tickers": len(metrics),
                 "closed_trades": sum(m["closed"] for m in metrics),
                 "open_positions": sum(m["open"] for m in (r[mode] for r in items)),
-                "median_trades_per_etf": med("closed"),
-                "median_win_rate": med("win_rate"),
-                "median_return_per_etf": med("median_return"),
-                "median_mean_return_per_etf": med("mean_return"),
-                "median_profit_factor": med("profit_factor"),
-                "median_max_drawdown": med("max_drawdown"),
+                "median_trades_per_ticker": med("closed"),
+                "median_win_rate_per_ticker": med("win_rate"),
+                "median_return_per_ticker": med("median_return"),
+                "median_mean_return_per_ticker": med("mean_return"),
+                "median_finite_profit_factor_per_ticker": med("profit_factor"),
+                "tickers_with_infinite_profit_factor": sum(
+                    m.get("profit_factor") == "inf" for m in metrics
+                ),
+                "median_trade_sequence_drawdown_per_ticker": med("max_drawdown"),
                 "median_duration": med("avg_bars"),
+                **pooled,
             })
     return result
 
-
 def aggregate_yearly_audit(rows):
-    """Breakdown cronologico per anno d'ingresso, con uguale peso per ETF."""
+    """Breakdown per anno: mediane per ticker e statistiche pooled sui trade."""
     result = []
     for sid in ("mr", "smr"):
         for method, key in (("old_close_entry", "old_trades"), ("open_next_day", "trades")):
@@ -220,12 +251,13 @@ def aggregate_yearly_audit(rows):
                             for r in rows if r["system"] == sid
                             for t in r.get(key, []) if str(t.get("entry_date", ""))[:4].isdigit()})
             for year in years:
-                stats = []
+                stats, annual_trades = [], []
                 for r in rows:
                     if r["system"] != sid:
                         continue
                     selected = [t for t in r.get(key, [])
                                 if str(t.get("entry_date", "")).startswith(year)]
+                    annual_trades.extend(selected)
                     m = _trade_stats(selected)
                     if m["closed"]:
                         stats.append(m)
@@ -237,10 +269,12 @@ def aggregate_yearly_audit(rows):
                 result.append({
                     "system": sid, "method": method, "year": int(year),
                     "tickers": len(stats), "closed_trades": sum(x["closed"] for x in stats),
-                    "median_win_rate": med("win_rate"),
-                    "median_return_per_etf": med("median_return"),
-                    "median_mean_return_per_etf": med("mean_return"),
-                    "median_profit_factor": med("profit_factor"),
-                    "median_max_drawdown": med("max_drawdown"),
+                    "median_win_rate_per_ticker": med("win_rate"),
+                    "median_return_per_ticker": med("median_return"),
+                    "median_mean_return_per_ticker": med("mean_return"),
+                    "median_finite_profit_factor_per_ticker": med("profit_factor"),
+                    "tickers_with_infinite_profit_factor": sum(x.get("profit_factor") == "inf" for x in stats),
+                    "median_trade_sequence_drawdown_per_ticker": med("max_drawdown"),
+                    **_pooled_trade_stats(annual_trades),
                 })
     return result
