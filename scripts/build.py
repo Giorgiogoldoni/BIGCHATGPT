@@ -139,13 +139,13 @@ def scrivi(universo, dati):
                 "open_next_day": "Simulazione indipendente: ingresso all'Open successiva, uscite ricalcolate sul prezzo effettivo; MR = Bollinger superiore o Chandelier 3 ATR; SMR = Bollinger superiore o stop close-based -15%.",
             },
             "audit_errors": reversion_errors,
-            "instrument_type_counts": {str(k): sum(1 for r in reversion_rows if str(r.get("instrument_type")) == str(k)) for k in sorted({r.get("instrument_type") for r in reversion_rows}, key=lambda x: str(x))},
+            "instrument_type_counts": {str(k): len({r["ticker"] for r in reversion_rows if r.get("instrument_type") == k}) for k in sorted({r.get("instrument_type") for r in reversion_rows}, key=lambda x: str(x))},
             "summary": RA.aggregate_audit(reversion_rows),
             "yearly_summary": RA.aggregate_yearly_audit(reversion_rows),
             "tickers": reversion_rows,
         }
         (DATA / "reversion_audit.json").write_text(json.dumps(audit_payload, separators=(",", ":")), encoding="utf-8")
-        print("audit MR/SMR ETF:", len({r["ticker"] for r in reversion_rows}),
+        print("audit MR/SMR strumenti:", len({r["ticker"] for r in reversion_rows}),
               "| righe ETF/sistema:", len(reversion_rows))
 
 
