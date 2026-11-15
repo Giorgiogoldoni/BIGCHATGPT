@@ -56,6 +56,15 @@ def main():
                 m.get("max_drawdown"), m.get("avg_bars"), row.get("delta_median_return") if method == "open_next_day" else None])
     fit(ws2)
 
+    wsy = wb.create_sheet("Per anno")
+    wsy.append(["Sistema", "Metodo", "Anno ingresso", "ETF", "Trade chiusi", "Win rate mediano %",
+                "Rendimento mediano %", "Rendimento medio %", "Profit factor mediano", "Drawdown mediano %"])
+    for row in payload.get("yearly_summary", []):
+        wsy.append([row.get(k) for k in ("system", "method", "year", "tickers", "closed_trades",
+            "median_win_rate", "median_return_per_etf", "median_mean_return_per_etf",
+            "median_profit_factor", "median_max_drawdown")])
+    fit(wsy)
+
     ws3 = wb.create_sheet("Trade Open T+1")
     ws3.append(["Ticker", "Sistema", "Stato", "Segnale", "Ingresso", "Prezzo ingresso",
                 "Uscita", "Prezzo uscita", "Prezzo mark", "Rendimento lordo %", "Netto %", 
