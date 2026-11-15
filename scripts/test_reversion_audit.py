@@ -3,7 +3,7 @@ import unittest
 import numpy as np
 import pandas as pd
 
-from reversion_audit import simulate_reversion_trades
+from reversion_audit import simulate_reversion_trades, _pooled_trade_stats
 
 
 def frame(opn, high, low, close):
@@ -104,6 +104,29 @@ class ReversionAuditTests(unittest.TestCase):
             trades[0]["net_return_pct"],
             trades[0]["gross_return_pct"] - 0.10, places=4,
         )
+
+    def test_pooled_profit_factor_uses_all_wins_and_losses(self):
+        trades = [
+            {"status": "closed", "net_return_pct": 10.0},
+            {"status": "closed", "net_return_pct": -5.0},
+            {"status": "closed", "net_return_pct": 5.0},
+        ]
+        stats = _pooled_trade_stats(trades)
+        self.assertEqual(stats["pooled_closed_trades"], 3)
+        self.assertAlmostEqual(stats["pooled_win_rate"], 66.67, places=2)
+        self.assertEqual(stats["pooled_profit_factor"], 3.0)
+
+    def test_open_positions_are_separate_from_pooled_profit_factor(self):
+        trades = [
+            {"status": "closed", "net_return_pct": 4.0},
+            {"status": "open", "estimated_net_mark_return_pct": -2.0},
+            {"status": "open", "estimated_net_mark_return_pct": 3.0},
+        ]
+        stats = _pooled_trade_stats(trades)
+        self.assertEqual(stats["pooled_closed_trades"], 1)
+        self.assertEqual(stats["pooled_open_positions"], 2)
+        self.assertEqual(stats["open_negative_positions"], 1)
+        self.assertEqual(stats["pooled_profit_factor"], "inf")
 
 
 if __name__ == "__main__":
