@@ -134,6 +134,7 @@ def scrivi(universo, dati):
                 "open_next_day": "Simulazione indipendente: ingresso all'Open successiva, uscite ricalcolate sul prezzo effettivo; MR = Bollinger superiore o Chandelier 3 ATR; SMR = Bollinger superiore o stop close-based -15%.",
             },
             "summary": RA.aggregate_audit(reversion_rows),
+            "yearly_summary": RA.aggregate_yearly_audit(reversion_rows),
             "tickers": reversion_rows,
         }
         (DATA / "reversion_audit.json").write_text(json.dumps(audit_payload, separators=(",", ":")), encoding="utf-8")
