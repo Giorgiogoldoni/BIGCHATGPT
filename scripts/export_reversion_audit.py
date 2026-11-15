@@ -35,34 +35,41 @@ def main():
     ws.append(["Costi round-trip (bp)", payload.get("cost_round_trip_bps")])
     ws.append(["Metodo", "Mediana per ETF: ogni ETF ha uguale peso, indipendentemente dal numero di segnali."])
     ws.append([])
-    ws.append(["Sistema", "Metodo", "ETF con trade", "Trade chiusi", "Posizioni aperte",
-               "Mediana trade/ETF", "Win rate mediano %", "Rendimento mediano %", "Media rendimento %", 
-               "Profit factor mediano", "Drawdown mediano %", "Durata mediana sedute"])
+    ws.append(["Sistema", "Metodo", "Strumenti con trade", "Trade chiusi", "Posizioni aperte",
+               "Mediana trade/strumento", "Win rate mediano per strumento %", "Rendimento mediano per strumento %", "Media rendimento mediana %",
+               "PF mediano (solo finiti)", "Strumenti con PF infinito", "DD mediano sequenza trade %", "Durata mediana sedute",
+               "Win rate pooled %", "PF pooled", "Rendimento medio trade %", "Somma rendimenti netti %",
+               "Posizioni aperte negative", "Mark medio aperte %", "Mark peggiore aperte %"])
     for row in payload.get("summary", []):
         ws.append([row.get(k) for k in ("system", "method", "tickers", "closed_trades", "open_positions",
-            "median_trades_per_etf", "median_win_rate", "median_return_per_etf",
-            "median_mean_return_per_etf", "median_profit_factor", "median_max_drawdown", "median_duration")])
+            "median_trades_per_ticker", "median_win_rate_per_ticker", "median_return_per_ticker",
+            "median_mean_return_per_ticker", "median_finite_profit_factor_per_ticker", "tickers_with_infinite_profit_factor",
+            "median_trade_sequence_drawdown_per_ticker", "median_duration", "pooled_win_rate", "pooled_profit_factor",
+            "pooled_mean_net_return", "pooled_net_return_sum_pct", "open_negative_positions",
+            "open_mean_mark_return", "open_worst_mark_return")])
     fit(ws, header_row=6)
 
     ws2 = wb.create_sheet("Confronto ETF")
-    ws2.append(["Ticker", "Sistema", "Metodo", "Trade chiusi", "Aperti", "Win rate %", "Rendimento mediano %",
-                "Rendimento medio %", "Profit factor", "Max drawdown %", "Durata media", "Delta mediana vs Close %"])
+    ws2.append(["Ticker", "Tipologia", "Sistema", "Metodo", "Trade chiusi", "Aperti", "Win rate %", "Rendimento mediano %",
+                "Rendimento medio %", "PF finito", "Drawdown sequenza trade %", "Durata media", "Delta mediana vs Close %"])
     for row in payload.get("tickers", []):
         for method, label in (("old_close_entry", "Originale: Close segnale"),
                               ("open_next_day", "Corretto: Open successiva")):
             m = row.get(method, {})
-            ws2.append([row.get("ticker"), row.get("system"), label, m.get("closed"), m.get("open"),
+            ws2.append([row.get("ticker"), row.get("instrument_type"), row.get("system"), label, m.get("closed"), m.get("open"),
                 m.get("win_rate"), m.get("median_return"), m.get("mean_return"), m.get("profit_factor"),
                 m.get("max_drawdown"), m.get("avg_bars"), row.get("delta_median_return") if method == "open_next_day" else None])
     fit(ws2)
 
     wsy = wb.create_sheet("Per anno")
-    wsy.append(["Sistema", "Metodo", "Anno ingresso", "ETF", "Trade chiusi", "Win rate mediano %",
-                "Rendimento mediano %", "Rendimento medio %", "Profit factor mediano", "Drawdown mediano %"])
+    wsy.append(["Sistema", "Metodo", "Anno ingresso", "Strumenti", "Trade chiusi", "Win rate mediano per strumento %",
+                "Rendimento mediano per strumento %", "Media rendimento mediana %", "PF mediano finito", "DD mediano sequenza trade %",
+                "Win rate pooled %", "PF pooled", "Rendimento medio trade %", "Somma rendimenti netti %"])
     for row in payload.get("yearly_summary", []):
         wsy.append([row.get(k) for k in ("system", "method", "year", "tickers", "closed_trades",
-            "median_win_rate", "median_return_per_etf", "median_mean_return_per_etf",
-            "median_profit_factor", "median_max_drawdown")])
+            "median_win_rate_per_ticker", "median_return_per_ticker", "median_mean_return_per_ticker",
+            "median_finite_profit_factor_per_ticker", "median_trade_sequence_drawdown_per_ticker",
+            "pooled_win_rate", "pooled_profit_factor", "pooled_mean_net_return", "pooled_net_return_sum_pct")])
     fit(wsy)
 
     ws3 = wb.create_sheet("Trade Open T+1")
@@ -88,7 +95,9 @@ def main():
         ["Prezzi", "OHLC non rettificati; dividendi esclusi."],
         ["Universo", "ETF non a leva e non inversi; esclusi strumenti classificati lv o inv."],
         ["Confronto", "Originale: ingresso Close del segnale e uscita registrata dal motore BIG. Corretto: ingresso Open successiva e uscita ricalcolata sul prezzo effettivo."],
-        ["Metriche", "Le metriche sono calcolate sui trade chiusi per ETF; aggregazione tramite mediana tra ETF con uguale peso. Le posizioni aperte sono contate e mark-to-market, ma non inserite nel profit factor dei trade chiusi."],
+        ["Metriche", "Il report distingue mediane per singolo strumento da statistiche pooled su tutti i trade. PF pooled = somma profitti netti / valore assoluto somma perdite nette. I PF infiniti per strumento sono contati separatamente e non entrano nella mediana dei PF finiti. Le posizioni aperte sono riportate separatamente con mark-to-market stimato, non incluse nel PF pooled."],
+        ["Drawdown", "Il drawdown riportato in questa fase è quello della sequenza dei trade chiusi per strumento; NON è un drawdown giornaliero mark-to-market del portafoglio. La curva giornaliera richiede un modello esplicito di capitale e pesi."],
+        ["Tipologia", "Ogni ticker è accompagnato dalla classificazione ETF/ETC/ETP ricevuta dall'universo sorgente. L'audit non deve essere descritto come ETF-only."],
         ["Limiti", "Questo audit corregge la coerenza dei prezzi di esecuzione e conserva le posizioni aperte. Non è ancora una validazione walk-forward dei parametri e non modifica la Top 20."],
     ]:
         ws4.append(line)
