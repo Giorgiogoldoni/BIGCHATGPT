@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - "scripts/reversion_audit.py"
+      - "scripts/export_reversion_audit.py"
+      - "scripts/build.py"
       - "scripts/test_reversion_audit.py"
       - "scripts/az_engine.py"
       - "scripts/systems.py"
@@ -36,4 +38,7 @@ jobs:
         run: pip install pandas numpy
       - name: Test audit Mean Reversion
         run: python -m unittest test_causality.py test_score.py test_benchmark.py test_reversion_audit.py -v
+        working-directory: scripts
+      - name: Verifica sintassi pipeline audit
+        run: python -m py_compile build.py reversion_audit.py export_reversion_audit.py
         working-directory: scripts
