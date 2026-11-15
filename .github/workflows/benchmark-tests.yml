@@ -1,0 +1,24 @@
+name: Test benchmark
+on:
+  pull_request:
+    paths:
+      - "scripts/benchmark.py"
+      - "scripts/build.py"
+      - "scripts/export_benchmark.py"
+      - "scripts/test_benchmark.py"
+      - ".github/workflows/benchmark-tests.yml"
+permissions:
+  contents: read
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Dipendenze
+        run: pip install pandas numpy
+      - name: Test benchmark
+        run: python -m unittest test_benchmark.py -v
+        working-directory: scripts
