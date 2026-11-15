@@ -99,7 +99,7 @@ def scrivi(universo, dati):
                 benchmark_forward.extend(result["forward"])
                 if not u["lv"] and not u["inv"]:
                     try:
-                        reversion_rows.extend(RA.audit_ticker(u["t"], full, ev, meta))
+                        reversion_rows.extend(RA.audit_ticker(u["t"], full, ev, meta, instrument_type=u.get("tp")))
                     except Exception as audit_error:
                         reversion_errors.append(u["t"])
                         print("ERRORE audit MR/SMR", u["t"], repr(audit_error)[:120])
@@ -132,13 +132,14 @@ def scrivi(universo, dati):
         BM.write(DATA, benchmark_rows, benchmark_forward, gen, PERIODO)
         audit_payload = {
             "generated": gen, "period": PERIODO, "cost_round_trip_bps": 10,
-            "universe_filter": "ETF non a leva e non inversi; stesso universo del benchmark.",
+            "universe_filter": "ETF/ETC/ETP non a leva e non inversi; stesso universo del benchmark. La tipologia di ogni strumento è riportata separatamente.",
             "execution": "Segnale a Close t, ingresso Open t+1; prima verifica uscita alla Close di t+1; prezzi Close non rettificati, dividendi esclusi.",
             "methods": {
                 "old_close_entry": "Ricostruzione delle posizioni originali BIG: ingresso al Close del segnale e uscita originale.",
                 "open_next_day": "Simulazione indipendente: ingresso all'Open successiva, uscite ricalcolate sul prezzo effettivo; MR = Bollinger superiore o Chandelier 3 ATR; SMR = Bollinger superiore o stop close-based -15%.",
             },
             "audit_errors": reversion_errors,
+            "instrument_type_counts": {str(k): sum(1 for r in reversion_rows if str(r.get("instrument_type")) == str(k)) for k in sorted({r.get("instrument_type") for r in reversion_rows}, key=lambda x: str(x))},
             "summary": RA.aggregate_audit(reversion_rows),
             "yearly_summary": RA.aggregate_yearly_audit(reversion_rows),
             "tickers": reversion_rows,
