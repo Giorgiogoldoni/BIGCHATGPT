@@ -9,14 +9,14 @@ ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
 
 
-def fit(ws):
-    ws.freeze_panes = "A2"
-    ws.auto_filter.ref = ws.dimensions
+def fit(ws, header_row=1):
+    ws.freeze_panes = f"A{header_row + 1}"
+    ws.auto_filter.ref = f"A{header_row}:{get_column_letter(ws.max_column)}{ws.max_row}"
     for col in ws.columns:
         letter = get_column_letter(col[0].column)
         width = min(48, max(12, max(len(str(x.value or "")) for x in col) + 2))
         ws.column_dimensions[letter].width = width
-    for cell in ws[1]:
+    for cell in ws[header_row]:
         cell.font = Font(bold=True, color="FFFFFF")
         cell.fill = PatternFill("solid", fgColor="243B53")
         cell.alignment = Alignment(wrap_text=True)
@@ -42,7 +42,7 @@ def main():
         ws.append([row.get(k) for k in ("system", "method", "tickers", "closed_trades", "open_positions",
             "median_trades_per_etf", "median_win_rate", "median_return_per_etf",
             "median_mean_return_per_etf", "median_profit_factor", "median_max_drawdown", "median_duration")])
-    fit(ws)
+    fit(ws, header_row=6)
 
     ws2 = wb.create_sheet("Confronto ETF")
     ws2.append(["Ticker", "Sistema", "Metodo", "Trade chiusi", "Aperti", "Win rate %", "Rendimento mediano %",
