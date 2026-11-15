@@ -146,7 +146,7 @@ def _trade_stats(trades, return_key="net_return_pct"):
     }
 
 
-def audit_ticker(ticker, df, events, meta, cost_bps=10.0):
+def audit_ticker(ticker, df, events, meta, cost_bps=10.0, instrument_type=None):
     """Confronta l'esecuzione storica originale con quella coerente Open(t+1).
 
     L'originale è letto da meta['tr'] (ingresso Close del segnale). La nuova
@@ -173,7 +173,7 @@ def audit_ticker(ticker, df, events, meta, cost_bps=10.0):
         for t in trades:
             t["ticker"] = ticker
         out.append({
-            "ticker": ticker, "system": sid,
+            "ticker": ticker, "system": sid, "instrument_type": instrument_type,
             "old_close_entry": old_stats,
             "open_next_day": new_stats,
             "delta_median_return": (
