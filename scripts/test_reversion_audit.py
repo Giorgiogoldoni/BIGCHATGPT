@@ -63,6 +63,19 @@ class ReversionAuditTests(unittest.TestCase):
         self.assertEqual(trade["reason"], "Stop -15% (close)")
         self.assertAlmostEqual(trade["gross_return_pct"], -16.6667, places=3)
 
+    def test_exit_is_checked_at_close_of_entry_day(self):
+        # Signal at day 0, fill at Open day 1. A close below the SMR stop
+        # on day 1 must exit immediately, not one session later.
+        df = frame([100, 120, 90, 95], [101, 121, 100, 96],
+                   [99, 85, 85, 94], [100, 100, 90, 95])
+        trades = simulate_reversion_trades(
+            df, [event(df, "smr")], "smr",
+            bb_upper=np.full(4, 1000.0), atr=[None] * 4,
+        )
+        self.assertEqual(trades[0]["entry_date"], str(df.index[1].date()))
+        self.assertEqual(trades[0]["exit_date"], str(df.index[1].date()))
+        self.assertEqual(trades[0]["exit_price"], 100.0)
+
     def test_open_position_is_reported_not_dropped(self):
         df = frame([100, 100, 101, 102], [101, 102, 103, 104],
                    [99, 99, 100, 101], [100, 101, 102, 103])

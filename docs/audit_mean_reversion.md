@@ -1,6 +1,6 @@
 # Audit tecnico — Mean Reversion e Super Mean Reversion
 
-**Stato:** audit in corso. Questo documento descrive i rilievi riproducibili sul codice e il perimetro dei test. Non cambia i segnali, i parametri, la classifica operativa o la Top 20.
+**Stato:** pipeline di audit storico implementata e testata in CI; manca l'esecuzione quinquennale completa dopo il merge. Fino alla pubblicazione dei nuovi file, i risultati quantitativi non sono ancora validati. Non cambia i segnali, i parametri, la classifica operativa o la Top 20.
 
 ## Perimetro
 
@@ -52,7 +52,7 @@ Il motore SMR controlla `Close / entry_price - 1 <= -15%`. Non simula uno stop i
 
 - MR: prima tra Close >= Bollinger superiore e Close sotto il massimo High dall'ingresso meno 3 × ATR14.
 - SMR: prima tra Close >= Bollinger superiore e Close <= ingresso effettivo × 0,85.
-- Le uscite sono valutate dalla seduta successiva all'ingresso, come nel motore a barre giornaliere.
+- L'ingresso è all'Open di t+1 e la prima verifica delle uscite avviene alla Close della stessa seduta t+1: non si perde una giornata di controllo.
 - Gli stop restano close-based, coerenti con il codice attuale: un gap può produrre una perdita superiore alla soglia.
 - Le posizioni non chiuse sono conservate come `status=open` e valorizzate all'ultima chiusura; non entrano nel campione dei trade chiusi.
 - Il costo round-trip è applicato ai trade chiusi; per le posizioni aperte è esposto separatamente come stima mark-to-market.
@@ -70,12 +70,21 @@ python -m unittest test_causality.py test_score.py test_benchmark.py test_revers
 
 I test verificano: ingresso Open t+1, Chandelier MR ricalcolato sull'ingresso effettivo, uscita Bollinger, stop SMR close-based e gap, conservazione delle posizioni aperte, costi round-trip e validazione del sistema richiesto.
 
+## Esecuzione storica automatizzata
+
+Con il parametro `CLASSIFICA=1`, `build.py` applica l'audit a ogni ETF del medesimo universo quinquennale del benchmark, escludendo strumenti a leva e inversi. Per ogni ETF e per MR/SMR confronta:
+- posizioni BIG originali, entrata al Close della data segnale;
+- simulazione corretta, entrata all'Open della seduta successiva e uscite ricalcolate rispetto al prezzo effettivo.
+
+L'output `data/reversion_audit.json` conserva le statistiche per ETF, i trade ricalcolati, le posizioni ancora aperte mark-to-market e il riepilogo annuale per anno d'ingresso. `data/reversion_audit.xlsx` presenta quattro fogli: Sintesi, Confronto ETF, Per anno, Trade Open T+1, oltre alle note metodologiche.
+
+L'aggregazione usa la mediana per ETF, così gli strumenti con molti più segnali non pesano automaticamente di più. Le posizioni aperte sono conteggiate separatamente e non entrano nel profit factor dei trade chiusi. Il riepilogo per anno è descrittivo e non va confuso con un walk-forward fuori campione.
+
 ## Cosa resta da fare prima di riaprire la classifica
 
-1. Eseguire il simulatore sui dati storici completi dell'universo benchmark.
-2. Confrontare vecchio `original` e simulazione coerente Open(t+1) per MR e SMR.
-3. Pubblicare numero di trade chiusi/aperti, win rate, profit factor, rendimento mediano, durata, drawdown e distribuzione per ETF.
-4. Per MR, isolare l'effetto della Bollinger e del Chandelier; per Hurst confrontare filtro attuale, senza filtro e soglie alternative senza ottimizzare sul campione finale.
-5. Eseguire walk-forward/out-of-sample e verificare la robustezza per ETF e sottoperiodi.
+1. Eseguire il workflow quinquennale dopo il merge e verificare che i due nuovi file siano pubblicati.
+2. Leggere i risultati effettivi e confrontare vecchia esecuzione Close e nuova esecuzione Open(t+1).
+3. Valutare trade chiusi/aperti, win rate, profit factor, rendimento mediano, durata, drawdown, concentrazione per ETF e risultati annuali.
+4. Solo dopo, progettare test separati per Hurst (filtro attuale, senza filtro e soglie alternative) e validazione walk-forward/out-of-sample senza ottimizzare sul campione finale.
 
 **Decisione provvisoria:** nessuna modifica ai parametri o alla classifica operativa finché i punti sopra non sono stati misurati.

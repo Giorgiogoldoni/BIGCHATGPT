@@ -64,9 +64,9 @@ def simulate_reversion_trades(df, events, system_id, cost_bps=10.0,
 
         peak = float(high[entry_i])
         result = None
-        # Non si valuta l'uscita sulla stessa barra dell'ingresso:
-        # il segnale originale viene elaborato a fine seduta t+1.
-        for j in range(entry_i + 1, len(df)):
+        # L'ingresso avviene all'Open di t+1: la chiusura della stessa
+        # seduta è già la prima osservazione valida per le regole di uscita.
+        for j in range(entry_i, len(df)):
             peak = max(peak, float(high[j]))
             upper = bb_upper[j]
             upper_hit = np.isfinite(upper) and close[j] >= upper
@@ -116,3 +116,131 @@ def simulate_reversion_trades(df, events, system_id, cost_bps=10.0,
         next_free = exit_i + 1
 
     return out
+
+
+def _trade_stats(trades, return_key="net_return_pct"):
+    """Metriche su trade chiusi; le posizioni aperte restano riportate a parte."""
+    closed = [t for t in trades if t.get("status") == "closed" and t.get(return_key) is not None]
+    vals = np.asarray([float(t[return_key]) for t in closed], dtype=float)
+    if not len(vals):
+        return {"closed": 0, "open": sum(t.get("status") == "open" for t in trades),
+                "win_rate": None, "mean_return": None, "median_return": None,
+                "profit_factor": None, "max_drawdown": None, "avg_bars": None,
+                "compounded_return": None}
+    wins, losses = vals[vals > 0], vals[vals < 0]
+    eq = np.cumprod(1.0 + vals / 100.0)
+    path = np.r_[1.0, eq]
+    dd = path / np.maximum.accumulate(path) - 1.0
+    return {
+        "closed": int(len(vals)),
+        "open": int(sum(t.get("status") == "open" for t in trades)),
+        "win_rate": round(float(np.mean(vals > 0) * 100), 2),
+        "mean_return": round(float(np.mean(vals)), 3),
+        "median_return": round(float(np.median(vals)), 3),
+        "profit_factor": round(float(wins.sum() / abs(losses.sum())), 3)
+            if len(losses) and abs(losses.sum()) > 0 else (None if not len(wins) else "inf"),
+        "max_drawdown": round(float(dd.min() * 100), 2),
+        "avg_bars": round(float(np.mean([t["bars"] for t in closed if t.get("bars") is not None])), 1)
+            if any(t.get("bars") is not None for t in closed) else None,
+        "compounded_return": round(float((np.prod(1.0 + vals / 100.0) - 1.0) * 100), 2),
+    }
+
+
+def audit_ticker(ticker, df, events, meta, cost_bps=10.0):
+    """Confronta l'esecuzione storica originale con quella coerente Open(t+1).
+
+    L'originale è letto da meta['tr'] (ingresso Close del segnale). La nuova
+    simulazione ricalcola le uscite sul prezzo effettivo Open(t+1), inclusa la
+    chiusura della stessa seduta d'ingresso. Le righe restano per ETF/sistema.
+    """
+    out = []
+    original = {}
+    for row in meta.get("tr", []):
+        if len(row) >= 7 and row[0] in SUPPORTED:
+            original.setdefault(row[0], []).append({
+                "system": row[0], "status": "open" if row[3] is None else "closed",
+                "signal_date": row[1], "entry_date": row[1],
+                "entry_price": row[2], "exit_date": row[3], "exit_price": row[4],
+                "reason": row[5], "gross_return_pct": row[6],
+                "net_return_pct": (float(row[6]) - cost_bps / 100.0) if row[3] is not None else None,
+                "bars": None,
+            })
+    for sid in ("mr", "smr"):
+        trades = simulate_reversion_trades(df, events, sid, cost_bps=cost_bps)
+        old = original.get(sid, [])
+        new_stats = _trade_stats(trades)
+        old_stats = _trade_stats(old)
+        for t in trades:
+            t["ticker"] = ticker
+        out.append({
+            "ticker": ticker, "system": sid,
+            "old_close_entry": old_stats,
+            "open_next_day": new_stats,
+            "delta_median_return": (
+                round(new_stats["median_return"] - old_stats["median_return"], 3)
+                if new_stats["median_return"] is not None and old_stats["median_return"] is not None else None
+            ),
+            "old_trades": old,
+            "trades": trades,
+        })
+    return out
+
+
+def aggregate_audit(rows):
+    """Aggrega per ETF con peso uguale; evita che gli ETF con più segnali dominino."""
+    result = []
+    for sid in ("mr", "smr"):
+        items = [r for r in rows if r["system"] == sid]
+        for mode in ("old_close_entry", "open_next_day"):
+            metrics = [r[mode] for r in items if r[mode]["closed"] > 0]
+            def med(key):
+                vals = [m[key] for m in metrics if isinstance(m.get(key), (int, float))]
+                return round(float(np.median(vals)), 3) if vals else None
+            result.append({
+                "system": sid, "method": mode, "tickers": len(metrics),
+                "closed_trades": sum(m["closed"] for m in metrics),
+                "open_positions": sum(m["open"] for m in (r[mode] for r in items)),
+                "median_trades_per_etf": med("closed"),
+                "median_win_rate": med("win_rate"),
+                "median_return_per_etf": med("median_return"),
+                "median_mean_return_per_etf": med("mean_return"),
+                "median_profit_factor": med("profit_factor"),
+                "median_max_drawdown": med("max_drawdown"),
+                "median_duration": med("avg_bars"),
+            })
+    return result
+
+
+def aggregate_yearly_audit(rows):
+    """Breakdown cronologico per anno d'ingresso, con uguale peso per ETF."""
+    result = []
+    for sid in ("mr", "smr"):
+        for method, key in (("old_close_entry", "old_trades"), ("open_next_day", "trades")):
+            years = sorted({str(t.get("entry_date", ""))[:4]
+                            for r in rows if r["system"] == sid
+                            for t in r.get(key, []) if str(t.get("entry_date", ""))[:4].isdigit()})
+            for year in years:
+                stats = []
+                for r in rows:
+                    if r["system"] != sid:
+                        continue
+                    selected = [t for t in r.get(key, [])
+                                if str(t.get("entry_date", "")).startswith(year)]
+                    m = _trade_stats(selected)
+                    if m["closed"]:
+                        stats.append(m)
+                if not stats:
+                    continue
+                def med(field):
+                    vals = [x[field] for x in stats if isinstance(x.get(field), (int, float))]
+                    return round(float(np.median(vals)), 3) if vals else None
+                result.append({
+                    "system": sid, "method": method, "year": int(year),
+                    "tickers": len(stats), "closed_trades": sum(x["closed"] for x in stats),
+                    "median_win_rate": med("win_rate"),
+                    "median_return_per_etf": med("median_return"),
+                    "median_mean_return_per_etf": med("mean_return"),
+                    "median_profit_factor": med("profit_factor"),
+                    "median_max_drawdown": med("max_drawdown"),
+                })
+    return result
