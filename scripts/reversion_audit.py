@@ -140,7 +140,7 @@ def _trade_stats(trades, return_key="net_return_pct"):
         "profit_factor": round(float(wins.sum() / abs(losses.sum())), 3)
             if len(losses) and abs(losses.sum()) > 0 else (None if not len(wins) else "inf"),
         "max_drawdown": round(float(dd.min() * 100), 2),
-        "avg_bars": round(float(np.mean([t["bars"] for t in closed])), 1),
+        "avg_bars": round(float(np.mean([t["bars"] for t in closed if t.get("bars") is not None])), 1)\n            if any(t.get("bars") is not None for t in closed) else None,
         "compounded_return": round(float((np.prod(1.0 + vals / 100.0) - 1.0) * 100), 2),
     }
 
