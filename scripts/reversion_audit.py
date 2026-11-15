@@ -179,6 +179,7 @@ def audit_ticker(ticker, df, events, meta, cost_bps=10.0):
                 round(new_stats["median_return"] - old_stats["median_return"], 3)
                 if new_stats["median_return"] is not None and old_stats["median_return"] is not None else None
             ),
+            "old_trades": old,
             "trades": trades,
         })
     return out
@@ -206,4 +207,39 @@ def aggregate_audit(rows):
                 "median_max_drawdown": med("max_drawdown"),
                 "median_duration": med("avg_bars"),
             })
+    return result
+
+
+def aggregate_yearly_audit(rows):
+    """Breakdown cronologico per anno d'ingresso, con uguale peso per ETF."""
+    result = []
+    for sid in ("mr", "smr"):
+        for method, key in (("old_close_entry", "old_trades"), ("open_next_day", "trades")):
+            years = sorted({str(t.get("entry_date", ""))[:4]
+                            for r in rows if r["system"] == sid
+                            for t in r.get(key, []) if str(t.get("entry_date", ""))[:4].isdigit()})
+            for year in years:
+                stats = []
+                for r in rows:
+                    if r["system"] != sid:
+                        continue
+                    selected = [t for t in r.get(key, [])
+                                if str(t.get("entry_date", "")).startswith(year)]
+                    m = _trade_stats(selected)
+                    if m["closed"]:
+                        stats.append(m)
+                if not stats:
+                    continue
+                def med(field):
+                    vals = [x[field] for x in stats if isinstance(x.get(field), (int, float))]
+                    return round(float(np.median(vals)), 3) if vals else None
+                result.append({
+                    "system": sid, "method": method, "year": int(year),
+                    "tickers": len(stats), "closed_trades": sum(x["closed"] for x in stats),
+                    "median_win_rate": med("win_rate"),
+                    "median_return_per_etf": med("median_return"),
+                    "median_mean_return_per_etf": med("mean_return"),
+                    "median_profit_factor": med("profit_factor"),
+                    "median_max_drawdown": med("max_drawdown"),
+                })
     return result
