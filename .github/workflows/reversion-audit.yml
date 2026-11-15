@@ -1,0 +1,39 @@
+name: Audit Mean Reversion
+
+on:
+  pull_request:
+    paths:
+      - "scripts/reversion_audit.py"
+      - "scripts/test_reversion_audit.py"
+      - "scripts/az_engine.py"
+      - "scripts/systems.py"
+      - "scripts/benchmark.py"
+      - "docs/audit_mean_reversion.md"
+      - ".github/workflows/reversion-audit.yml"
+  push:
+    branches: ["main"]
+    paths:
+      - "scripts/reversion_audit.py"
+      - "scripts/test_reversion_audit.py"
+      - "scripts/az_engine.py"
+      - "scripts/systems.py"
+      - "scripts/benchmark.py"
+      - "docs/audit_mean_reversion.md"
+      - ".github/workflows/reversion-audit.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  audit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Dipendenze
+        run: pip install pandas numpy
+      - name: Test audit Mean Reversion
+        run: python -m unittest test_reversion_audit.py -v
+        working-directory: scripts
