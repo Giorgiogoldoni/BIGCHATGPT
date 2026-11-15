@@ -33,7 +33,7 @@ def main():
     ws.append(["Generato", payload.get("generated")])
     ws.append(["Periodo", payload.get("period")])
     ws.append(["Costi round-trip (bp)", payload.get("cost_round_trip_bps")])
-    ws.append(["Metodo", "Mediana per ETF: ogni ETF ha uguale peso, indipendentemente dal numero di segnali."])
+    ws.append(["Metodo", "Mediane per strumento; metriche pooled calcolate sui trade, con un peso per trade."])
     ws.append([])
     ws.append(["Sistema", "Metodo", "Strumenti con trade", "Trade chiusi", "Posizioni aperte",
                "Mediana trade/strumento", "Win rate mediano per strumento %", "Rendimento mediano per strumento %", "Media rendimento mediana %",
@@ -49,7 +49,7 @@ def main():
             "open_mean_mark_return", "open_worst_mark_return")])
     fit(ws, header_row=6)
 
-    ws2 = wb.create_sheet("Confronto ETF")
+    ws2 = wb.create_sheet("Confronto strumenti")
     ws2.append(["Ticker", "Tipologia", "Sistema", "Metodo", "Trade chiusi", "Aperti", "Win rate %", "Rendimento mediano %",
                 "Rendimento medio %", "PF finito", "Drawdown sequenza trade %", "Durata media", "Delta mediana vs Close %"])
     for row in payload.get("tickers", []):
@@ -93,7 +93,7 @@ def main():
         ["Super Mean Reversion", "Uscita alla prima tra Close sopra/sulla Bollinger superiore e Close <= prezzo effettivo d'ingresso -15%. Stop close-based, non garantisce perdita massima del 15%."],
         ["Costi", "10 punti base round-trip; sottratti una sola volta ai trade chiusi."],
         ["Prezzi", "OHLC non rettificati; dividendi esclusi."],
-        ["Universo", "ETF non a leva e non inversi; esclusi strumenti classificati lv o inv."],
+        ["Universo", "ETF, ETC ed ETP non a leva e non inversi; esclusi strumenti classificati lv o inv. La tipologia è riportata per ticker."],
         ["Confronto", "Originale: ingresso Close del segnale e uscita registrata dal motore BIG. Corretto: ingresso Open successiva e uscita ricalcolata sul prezzo effettivo."],
         ["Metriche", "Il report distingue mediane per singolo strumento da statistiche pooled su tutti i trade. PF pooled = somma profitti netti / valore assoluto somma perdite nette. I PF infiniti per strumento sono contati separatamente e non entrano nella mediana dei PF finiti. Le posizioni aperte sono riportate separatamente con mark-to-market stimato, non incluse nel PF pooled."],
         ["Drawdown", "Il drawdown riportato in questa fase è quello della sequenza dei trade chiusi per strumento; NON è un drawdown giornaliero mark-to-market del portafoglio. La curva giornaliera richiede un modello esplicito di capitale e pesi."],
