@@ -26,12 +26,12 @@ def simulate_reversion_trades(df, events, system_id, cost_bps=10.0,
     """
     if system_id not in SUPPORTED:
         raise ValueError("system_id deve essere 'mr' oppure 'smr'")
+    if df is None or len(df) < 2:
+        return []
     required = {"Open", "High", "Low", "Close"}
     missing = required.difference(df.columns)
     if missing:
         raise ValueError("Colonne OHLC mancanti: " + ", ".join(sorted(missing)))
-    if df is None or len(df) < 2:
-        return []
 
     close = df["Close"].to_numpy(dtype=float)
     opn = df["Open"].to_numpy(dtype=float)
