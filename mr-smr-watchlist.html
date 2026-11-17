@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BIGCHATGPT — Watchlist MR / SMR</title>
+<style>
+:root{color-scheme:light}
+*{box-sizing:border-box}
+body{margin:0;background:#f6f7f9;color:#172033;font:14px/1.45 system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:1280px;margin:0 auto;padding:18px 16px 28px}
+h1{font-size:23px;margin:0 0 4px}.muted{color:#667085}.small{font-size:12px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}
+input,select{font:inherit;padding:9px 11px;border:1px solid #ccd2dc;border-radius:8px;background:#fff;min-height:40px}
+input{flex:1;min-width:190px}
+.summary{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin:14px 0}
+.metric{background:#fff;border:1px solid #e5e9ef;border-radius:11px;padding:12px}
+.metric b{display:block;font-size:22px;font-variant-numeric:tabular-nums}.metric span{font-size:12px;color:#667085}
+.group{margin:22px 0}.group h2{font-size:17px;margin:0 0 10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px}
+.trade{background:#fff;border:1px solid #e3e7ee;border-radius:12px;padding:13px;min-width:0}
+.tradehead{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.tradehead h3{margin:0;font-size:16px}.ticker{font-weight:700;color:#1d4ed8;text-decoration:none}
+.pill{font-size:11px;font-weight:700;border-radius:20px;padding:4px 8px;white-space:nowrap;background:#eef2f6;color:#475467}
+.pill.active{background:#e8f5e9;color:#176b3a}.pill.closed{background:#e8eefc;color:#234da0}.pill.pending{background:#fff4df;color:#9a5a00}
+.stats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}
+.stat{background:#f8fafc;border-radius:8px;padding:8px;min-width:0}
+.stat span{display:block;color:#667085;font-size:11px}.stat b{font-size:14px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.pos{color:#147d45}.neg{color:#b42318}
+.foot{border-top:1px solid #edf0f3;padding-top:8px;margin-top:8px;color:#667085;font-size:12px}
+.chart{display:inline-block;margin-top:8px;color:#1d4ed8;text-decoration:none;font-weight:600}
+.empty{padding:22px;background:#fff;border:1px solid #e5e9ef;border-radius:10px;color:#667085}
+.note{background:#fff;border:1px solid #e5e9ef;border-radius:10px;padding:12px;margin:14px 0;color:#475467;font-size:12px}
+@media(max-width:640px){main{padding:14px 12px 24px}h1{font-size:20px}.summary{grid-template-columns:repeat(2,minmax(0,1fr))}.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<h1>Watchlist Mean Reversion / Super Mean Reversion</h1>
+<div class="muted small" id="meta">Caricamento registro…</div>
+</header>
+<div class="summary">
+  <div class="metric"><b id="mrActive">—</b><span>MR attive</span></div>
+  <div class="metric"><b id="smrActive">—</b><span>SMR attive</span></div>
+  <div class="metric"><b id="closed">—</b><span>Operazioni chiuse dal 1/10/2026</span></div>
+  <div class="metric"><b id="pending">—</b><span>Segnali in attesa di apertura</span></div>
+</div>
+<div class="toolbar">
+  <input id="q" placeholder="Cerca ticker o nome ETF">
+  <select id="system"><option value="">MR e SMR</option><option value="MR">Solo MR</option><option value="SMR">Solo SMR</option></select>
+  <select id="status"><option value="">Tutti gli stati</option><option>ATTIVA</option><option>CHIUSA</option><option>IN ATTESA</option><option>DA VERIFICARE</option></select>
+  <select id="sort"><option value="date">Segnale più recente</option><option value="return">Rendimento migliore</option><option value="return_asc">Rendimento peggiore</option></select>
+</div>
+<div id="results"></div>
+<div class="note" id="method"></div>
+</main>
+<script src="navigation.js" defer></script>
+<script>
+const $=id=>document.getElementById(id);let DATA=null;
+const fmt=v=>v==null?"—":Number(v).toFixed(2).replace(".",",");
+const pct=v=>v==null?"—":(v>0?"+":"")+fmt(v)+"%";
+function card(r){
+ const state=r.status,sc=state==="ATTIVA"?"active":state==="CHIUSA"?"closed":state==="IN ATTESA"?"pending":"";
+ const pnl=r.return_net_pct,cl=pnl==null?"":pnl>=0?"pos":"neg";
+ const exit=state==="CHIUSA"?"Uscita "+(r.exit_date||"")+" · "+(r.exit_reason||""):state==="ATTIVA"?"Valorizzata all'ultima chiusura":"";
+ return '<article class="trade"><div class="tradehead"><div><h3>'+r.system+' · <a class="ticker" href="grafico.html?t='+encodeURIComponent(r.ticker)+'">'+r.ticker+'</a></h3><div class="muted small">'+(r.name||"")+'</div></div><span class="pill '+sc+'">'+state+'</span></div>'+
+ '<div class="stats"><div class="stat"><span>Data segnale</span><b>'+r.signal_date+'</b></div><div class="stat"><span>Ingresso teorico · Open</span><b>'+(r.execution_date||"In attesa")+'</b></div>'+
+ '<div class="stat"><span>Prezzo ingresso</span><b>'+(r.entry_price==null?"—":fmt(r.entry_price))+'</b></div><div class="stat"><span>Ultimo prezzo</span><b>'+fmt(r.last_price)+'</b></div>'+
+ '<div class="stat"><span>Rendimento netto stimato</span><b class="'+cl+'">'+pct(pnl)+'</b></div><div class="stat"><span>Sedute trascorse</span><b>'+r.sessions_held+'</b></div></div>'+
+ '<div class="foot">Close segnale: '+fmt(r.signal_close)+' · Ultimo dato: '+r.last_date+(exit?"<br>"+exit:"")+'</div><a class="chart" href="grafico.html?t='+encodeURIComponent(r.ticker)+'">Apri grafico ETF →</a></article>';
+}
+function render(){
+ if(!DATA)return;
+ const q=$("q").value.trim().toLowerCase(),s=$("system").value,st=$("status").value,sort=$("sort").value;
+ let rows=(DATA.rows||[]).filter(r=>(!q||(r.ticker+" "+r.name).toLowerCase().includes(q))&&(!s||r.system===s)&&(!st||r.status===st));
+ rows.sort((a,b)=>sort==="return"?(b.return_net_pct??-1e9)-(a.return_net_pct??-1e9):sort==="return_asc"?(a.return_net_pct??1e9)-(b.return_net_pct??1e9):b.signal_date.localeCompare(a.signal_date));
+ if(!rows.length){$("results").innerHTML='<div class="empty">Nessuna operazione corrisponde ai filtri. Il registro resta vuoto se non ci sono segnali dal 1 ottobre 2026.</div>';return}
+ const groups=["MR","SMR"];
+ $("results").innerHTML=groups.filter(g=>!s||s===g).map(g=>{const a=rows.filter(r=>r.system===g);return '<section class="group"><h2>'+g+' · '+a.length+' operazioni</h2><div class="cards">'+a.map(card).join("")+'</div></section>'}).join("");
+}
+fetch("data/mr_smr_watchlist.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("Registro non ancora pubblicato");return r.json()}).then(d=>{
+ DATA=d;const mr=d.summary.MR||{},smr=d.summary.SMR||{};
+ $("mrActive").textContent=mr.active||0;$("smrActive").textContent=smr.active||0;
+ $("closed").textContent=(mr.closed||0)+(smr.closed||0);$("pending").textContent=(mr.pending||0)+(smr.pending||0);
+ $("meta").textContent="Aggiornato: "+d.generated+" · segnali dal "+d.from_date+" · "+(d.rows||[]).length+" operazioni registrate";
+ $("method").textContent=d.execution_rule+" "+d.cost_rule+" I prezzi sono storici/teorici, non ordini eseguiti; l'aggiornamento giornaliero partirà quando il workflow programmato sarà attivo sul ramo principale.";
+ render();
+}).catch(e=>{$("meta").textContent=e.message;$("results").innerHTML='<div class="empty">Il primo registro sarà creato dal prossimo aggiornamento BIGCHATGPT.</div>';$("method").textContent="Universo: ETF non a leva e non inversi. Regole MR e SMR originali, senza mescolare le uscite sperimentali dell'audit."});
+["q","system","status","sort"].forEach(id=>$(id).addEventListener("input",render));
+</script>
+</body></html>
