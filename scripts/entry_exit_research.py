@@ -96,12 +96,13 @@ def _exit_one(df, entry_i, entry, mode, f):
     high = df["High"].to_numpy(float)
     low = df["Low"].to_numpy(float)
     close = df["Close"].to_numpy(float)
-    peak = high[entry_i]
+    peak = entry  # massimo noto prima della barra corrente: evita look-ahead intraday
     n = len(df)
     for j in range(entry_i, n):
-        peak = max(peak, high[j])
         if mode in ("stop_8",) or mode.startswith("chand_"):
-            level = entry * .92 if mode == "stop_8" else peak - float(mode.split("_")[1]) * f["atr"][j]
+            # Il trailing stop usa ATR e massimo disponibili alla chiusura precedente.
+            prior_atr = f["atr"][j-1] if j > 0 else np.nan
+            level = entry * .92 if mode == "stop_8" else peak - float(mode.split("_")[1]) * prior_atr
             if np.isfinite(level) and low[j] <= level:
                 px = min(opn[j], level) if opn[j] > 0 else level
                 return j, float(px), "intraday_stop_gap_aware"
@@ -119,6 +120,7 @@ def _exit_one(df, entry_i, entry, mode, f):
             if j + 1 < n and np.isfinite(opn[j+1]) and opn[j+1] > 0:
                 return j+1, float(opn[j+1]), "close_signal_next_open"
             return None
+        peak = max(peak, high[j])  # il massimo della barra diventa noto solo a fine seduta
     return None
 
 
