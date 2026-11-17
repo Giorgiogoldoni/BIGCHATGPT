@@ -65,6 +65,15 @@ class EntryExitResearchTests(unittest.TestCase):
         b = R.analyze_ticker("TEST.MI", df, ev, ["core"])
         self.assertEqual(a["entry"], b["entry"])
 
+    def test_max_holding_period_closes_before_next_cohort_entry(self):
+        df = sample_df(160)
+        entry_i = 20
+        f = R._features(df)
+        f["atr"] = np.full(len(df), 1e6)
+        result = R._exit_one(df, entry_i, float(df.Open.iloc[entry_i]), "chand_4.0", f)
+        self.assertEqual(result[0], entry_i + R.MAX_HOLD_BARS)
+        self.assertEqual(result[2], "max_hold_60_next_open")
+
     def test_all_exit_rules_share_same_cohort(self):
         df = sample_df()
         ev = [(str(df.index[i].date()), "core", "BUY", float(df.Close.iloc[i]), "test") for i in (20, 90, 160, 230)]
