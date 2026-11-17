@@ -121,8 +121,8 @@ def scrivi(universo, dati):
                         print("ERRORE audit MR/SMR", u["t"], repr(audit_error)[:120])
                 ev = [e for e in ev if e[0] >= str(d.index[0].date())]
                 meta["tr"] = [t for t in meta["tr"] if t[1] >= str(d.index[0].date())]
-        if not u["lv"] and not u["inv"]:
-            watchlist_rows.extend(MW.ticker_rows(u["t"], u["n"], d, meta["tr"]))
+            if not u["lv"] and not u["inv"]:
+                watchlist_rows.extend(MW.ticker_rows(u["t"], u["n"], d, meta["tr"]))
         except Exception as e:
             print("ERRORE calcolo", u["t"], repr(e)[:100]); errori.append(u["t"]); continue
         last, prev = d.iloc[-1], d.iloc[-2]; ult = str(d.index[-1].date())
