@@ -13,6 +13,8 @@ import pandas as pd
 HORIZONS = (5, 10, 20, 40, 60)
 COST_BPS = 10.0
 MIN_SIGNALS = 5
+MIN_TOTAL_SIGNALS = 30
+MAX_HOLD_BARS = 60
 EXIT_MODES = ("chand_2.0", "chand_3.0", "stop_8", "ema20_50",
               "bb_upper", "target_10", "time_20", "time_40", "time_60")
 
@@ -119,6 +121,10 @@ def _exit_one(df, entry_i, entry, mode, f):
             # Segnale calcolato alla chiusura j: esecuzione non prima dell'Open j+1.
             if j + 1 < n and np.isfinite(opn[j+1]) and opn[j+1] > 0:
                 return j+1, float(opn[j+1]), "close_signal_next_open"
+            return None
+        if j >= entry_i + MAX_HOLD_BARS - 1:
+            if j + 1 < n and np.isfinite(opn[j+1]) and opn[j+1] > 0:
+                return j+1, float(opn[j+1]), "max_hold_60_next_open"
             return None
         peak = max(peak, high[j])  # il massimo della barra diventa noto solo a fine seduta
     return None
@@ -228,7 +234,7 @@ def _rank_entries(rows):
                     "median_ticker_win_rate": round(float(np.median([x["win_rate"] for x in items])), 2),
                     "median_mae": round(float(np.median([x["mae_median"] for x in items])), 3),
                     "median_mfe": round(float(np.median([x["mfe_median"] for x in items])), 3),
-                    "eligible": len(items) >= MIN_SIGNALS})
+                    "eligible": len(items) >= MIN_SIGNALS and total_n >= MIN_TOTAL_SIGNALS})
     return sorted(out, key=lambda x: (x["horizon"], x["median_train_return"] if x["median_train_return"] is not None else -1e9), reverse=True)
 
 
@@ -241,9 +247,11 @@ def _rank_exits(rows):
         items = [x for x in items if x.get("n", 0) > 0]
         if not items:
             continue
-        out.append({"exit": mode, "tickers": len({x["ticker"] for x in items}),
+        ticker_count = len({x["ticker"] for x in items})
+        trade_count = sum(x["n"] for x in items)
+        out.append({"exit": mode, "tickers": ticker_count,
                     "entry_cohorts": len({x["entry_system"] for x in items}),
-                    "trades": sum(x["n"] for x in items),
+                    "trades": trade_count, "eligible": ticker_count >= MIN_SIGNALS and trade_count >= MIN_TOTAL_SIGNALS,
                     "median_ticker_return": round(float(np.median([x["median"] for x in items])), 3),
                     "median_train_return": round(float(np.median([x["splits"]["train"]["median"] for x in items if "train" in x.get("splits", {})])), 3) if any("train" in x.get("splits", {}) for x in items) else None,
                     "median_test_return": round(float(np.median([x["splits"]["test"]["median"] for x in items if "test" in x.get("splits", {})])), 3) if any("test" in x.get("splits", {}) for x in items) else None,
@@ -261,8 +269,10 @@ def _rank_matrix(rows):
         items = [x for x in items if x.get("n", 0) > 0]
         if not items:
             continue
-        out.append({"entry": entry, "exit": mode, "tickers": len({x["ticker"] for x in items}),
-                    "trades": sum(x["n"] for x in items),
+        ticker_count = len({x["ticker"] for x in items})
+        trade_count = sum(x["n"] for x in items)
+        out.append({"entry": entry, "exit": mode, "tickers": ticker_count,
+                    "trades": trade_count, "eligible": ticker_count >= MIN_SIGNALS and trade_count >= MIN_TOTAL_SIGNALS,
                     "median_ticker_return": round(float(np.median([x["median"] for x in items])), 3),
                     "median_train_return": round(float(np.median([x["splits"]["train"]["median"] for x in items if "train" in x.get("splits", {})])), 3) if any("train" in x.get("splits", {}) for x in items) else None,
                     "median_test_return": round(float(np.median([x["splits"]["test"]["median"] for x in items if "test" in x.get("splits", {})])), 3) if any("test" in x.get("splits", {}) for x in items) else None,
@@ -280,13 +290,13 @@ def build_payload(entry_rows, exit_rows, matrix_rows, generated, period, coverag
             top_entries.append(r["system"])
         if len(top_entries) == 10:
             break
-    top_exits = [r["exit"] for r in exit_rank[:10]]
+    top_exits = [r["exit"] for r in exit_rank if r.get("eligible")][:10]
     matrix_top = [r for r in matrix_rows if r["entry"] in top_entries and r["exit"] in top_exits]
     matrix_rank = _rank_matrix(matrix_top)
     return {
         "generated": generated, "period": period, "cost_round_trip_bps": COST_BPS,
         "execution": "Segnale a Close t; ingresso Open t+1. Stop intraday gap-aware; regole close-based eseguite all'Open successiva. Prezzi OHLC non rettificati, dividendi esclusi.",
-        "cohort_rule": "Per ogni sistema/ticker, segnali distanziati di almeno 60 sedute; la stessa coorte è applicata a tutte le uscite. Non rappresenta un portafoglio multi-ETF.",
+        "cohort_rule": "Per ogni sistema/ticker, segnali distanziati di almeno 60 sedute e durata massima 60 barre; l'eventuale uscita forzata avviene all'Open successiva. La stessa coorte è applicata a tutte le uscite. Non rappresenta un portafoglio multi-ETF.",
         "universe_filter": "Strumenti dell'universo BIG non a leva e non inversi; classificazione dello strumento ereditata dall'universo sorgente.",
         "coverage": coverage,
         "horizons": list(HORIZONS), "exit_modes": list(EXIT_MODES),
