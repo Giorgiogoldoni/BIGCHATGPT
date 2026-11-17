@@ -74,4 +74,5 @@ $("xls").onclick=()=>{const wb=XLSX.utils.book_new();
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(C.ev.map(e=>({Data:e[0],Sistema:nm(e[1]),Segnale:e[2],Prezzo:e[3],Note:e[4]}))),"Segnali");
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet((C.tr||[]).map(t=>({Sistema:nm(t[0]),Ingresso:t[1],"Prezzo ingresso":t[2],Uscita:t[3]||"","Prezzo uscita":t[4]||"",Motivo:t[5]||"","Guadagno %":t[6],Stato:t[3]?"Chiusa":"Aperta"}))),"Posizioni");
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(C.d.map(r=>({Data:r[0],Apertura:r[1],Massimo:r[2],Minimo:r[3],Chiusura:r[4]}))),"Prezzi");XLSX.writeFile(wb,"big_"+C.t+".xlsx")};
-</script></body></html>
+</script><script src="navigation.js" defer></script>
+</body></html>
