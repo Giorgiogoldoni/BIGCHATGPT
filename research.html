@@ -26,10 +26,10 @@ function table(id,rows,cols){const el=document.getElementById(id);if(!rows||!row
 el.innerHTML="<thead><tr>"+cols.map(c=>"<th>"+c[1]+"</th>").join("")+"</tr></thead><tbody>"+rows.map(r=>"<tr>"+cols.map(c=>"<td>"+fmt(r[c[0]])+"</td>").join("")+"</tr>").join("")+"</tbody>"}
 fetch("./data/entry_exit_research.json").then(r=>{if(!r.ok)throw Error("Report non ancora pubblicato");return r.json()}).then(d=>{
 document.getElementById("status").textContent="Aggiornamento: "+d.generated+" · Periodo: "+d.period;
-const c=d.coverage||{};document.getElementById("meta").textContent="ETF analizzati: "+(c.tickers_covered??"—")+" · Errori ricerca: "+((c.errors||[]).length)+" · Errori download: "+((c.benchmark_download_errors||[]).length)+" · Coorte: "+d.cohort_rule;
+const c=d.coverage||{};document.getElementById("meta").textContent="Strumenti analizzati: "+(c.tickers_covered??"—")+" · Errori ricerca: "+((c.errors||[]).length)+" · Errori download: "+((c.benchmark_download_errors||[]).length)+" · Coorte: "+d.cohort_rule;
 table("entries",(d.entry_ranking||[]).filter(x=>x.horizon===20),[["system","Sistema"],["tickers","ETF"],["signals","Segnali"],["median_train_return","Mediana train %"],["median_test_return","Mediana test %"],["median_ticker_edge","Edge vs baseline %"],["median_ticker_win_rate","Win rate %"]]);
-table("exits",d.exit_ranking,[["exit","Regola"],["tickers","ETF"],["entry_cohorts","Coorti"],["trades","Trade chiusi"],["median_ticker_return","Mediana %"],["median_ticker_pf","PF mediano"],["median_ticker_dd","DD sequenza %"]]);
-table("matrix",d.matrix_ranking,[["entry","Ingresso"],["exit","Uscita"],["tickers","ETF"],["trades","Trade"],["median_ticker_return","Mediana %"],["median_ticker_pf","PF mediano"]]);
+table("exits",d.exit_ranking,[["exit","Regola"],["tickers","ETF"],["entry_cohorts","Coorti"],["trades","Trade chiusi"],["median_train_return","Mediana train %"],["median_test_return","Mediana test %"],["median_ticker_pf","PF mediano"],["median_ticker_dd","DD sequenza %"]]);
+table("matrix",d.matrix_ranking,[["entry","Ingresso"],["exit","Uscita"],["tickers","ETF"],["trades","Trade"],["median_train_return","Mediana train %"],["median_test_return","Mediana test %"],["median_ticker_pf","PF mediano"]]);
 }).catch(e=>{document.getElementById("status").textContent=e.message+" — eseguire il workflow BIGCHATGPT con Classifica attiva."});
 </script>
 </body></html>
