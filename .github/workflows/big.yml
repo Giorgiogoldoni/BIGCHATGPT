@@ -2,8 +2,8 @@ name: Aggiorna BIGCHATGPT
 
 on:
   schedule:
-    - cron: '0 6 * * 1-5'
-    - cron: '0 6 * * 6'
+    - cron: '0 6 * * *'
+    - cron: '0 7 * * 6'
   workflow_dispatch:
     inputs:
       classifica:
@@ -25,7 +25,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 170
     env:
-      CLASSIFICA: ${{ (github.event.schedule == '0 6 * * 6' || inputs.classifica) && '1' || '0' }}
+      CLASSIFICA: ${{ (github.event.schedule == '0 7 * * 6' || inputs.classifica) && '1' || '0' }}
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
