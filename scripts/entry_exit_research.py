@@ -15,7 +15,7 @@ COST_BPS = 10.0
 MIN_SIGNALS = 5
 MIN_TOTAL_SIGNALS = 30
 MAX_HOLD_BARS = 60
-EXIT_MODES = ("chand_2.0", "chand_3.0", "stop_8", "ema20_50",
+EXIT_MODES = ("chand_2.0", "chand_2.5", "chand_3.0", "chand_4.0", "stop_8", "ema20_50",
               "bb_upper", "target_10", "time_20", "time_40", "time_60")
 
 
