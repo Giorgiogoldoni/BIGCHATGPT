@@ -58,4 +58,5 @@ $("tb").onclick=e=>{if(e.target.tagName=="A")return;const tr=e.target.closest("t
 $("xls").onclick=()=>{const O=$("ori").value;const out=RR.map(x=>{const o={Ticker:x.t,Nome:x.n,Emittente:x.e,["Miglior sistema +"+O]:x.m[0]?S.find(z=>z.id==x.m[0]).nome:"",Esito:ES[x.m[1]],"Storia (anni)":+x.yrs.toFixed(1)};
  S.forEach(s=>{const v=x.r.st[O]&&x.r.st[O][s.id];o[s.nome+" segnali"]=v?v[0]:"";o[s.nome+" % positivi"]=v?v[1]:"";o[s.nome+" mediana %"]=v?v[2]:"";o[s.nome+" eccesso %"]=v?v[3]:"";o[s.nome+" ecc. 1a meta %"]=v&&v[4]!=null?v[4]:"";o[s.nome+" ecc. 2a meta %"]=v&&v[5]!=null?v[5]:"";o[s.nome+" t"]=v&&v[8]!=null?v[8]:""});return o});
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(out),"Classifica +"+O);XLSX.writeFile(wb,"big_classifica_"+O+".xlsx")};
-</script></body></html>
+</script><script src="navigation.js" defer></script>
+</body></html>

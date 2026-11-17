@@ -6,6 +6,8 @@ on:
       - "scripts/build.py"
       - "scripts/export_benchmark.py"
       - "scripts/test_benchmark.py"
+      - "scripts/entry_exit_research.py"
+      - "scripts/test_entry_exit_research.py"
       - ".github/workflows/benchmark-tests.yml"
 permissions:
   contents: read
@@ -19,6 +21,6 @@ jobs:
           python-version: "3.11"
       - name: Dipendenze
         run: pip install pandas numpy
-      - name: Test benchmark
-        run: python -m unittest test_benchmark.py -v
+      - name: Test benchmark e ricerca entry/exit
+        run: python -m unittest test_benchmark.py test_entry_exit_research.py -v
         working-directory: scripts

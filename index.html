@@ -73,4 +73,5 @@ $("xls").onclick=()=>{const R=rows().map(r=>{const o={Ticker:r.t,Nome:r.n,ISIN:r
  ["Confluenza ("+$("fin").value+"gg)"]:r.conf,"Stato Trend":r.sta?r.sta[0]:"","Guadagno Trend %":r.sta&&r.sta[1]!=null?r.sta[1]:"","Core ora":r.core||"","Acq. nuovo":r.nuovo?"Sì":"",["Miglior sistema +"+$("ori").value]:(r.mg&&r.mg[0]?D.sistemi.find(q=>q.id==r.mg[0]).nome:""),"Esito classifica":r.mg?ESITO[r.mg[1]]:""};
  FAM.forEach((f,i)=>o["Famiglia "+f[0]]=r.fam[i]?"Sì":"");D.sistemi.forEach(s=>{o["Ultimo segnale "+s.nome]=r.s[s.id]||"";const x=r.x&&r.x[s.id];o["Guadagno % "+s.nome]=x?x[1]:"";o["Stato "+s.nome]=x?(x[2]?"Chiusa "+x[2]:"Aperta"):""});return o});
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(R),"big");XLSX.writeFile(wb,"big_segnali.xlsx")};
-</script></body></html>
+</script><script src="navigation.js" defer></script>
+</body></html>

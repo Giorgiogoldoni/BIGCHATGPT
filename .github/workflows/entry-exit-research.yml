@@ -1,0 +1,38 @@
+name: Ricerca Entry Exit — build sperimentale
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 170
+    env:
+      CLASSIFICA: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Dipendenze
+        run: pip install pandas numpy yfinance openpyxl
+      - name: Test completi
+        run: python -m unittest test_causality.py test_score.py test_benchmark.py test_reversion_audit.py test_entry_exit_research.py -v
+        working-directory: scripts
+      - name: Scarica dati e calcola ricerca indipendente
+        run: python build.py
+        working-directory: scripts
+      - name: Archivia risultati per revisione
+        uses: actions/upload-artifact@v4
+        with:
+          name: entry-exit-research-results
+          path: |
+            data/entry_exit_research.json
+            data/entry_exit_research.xlsx
+            data/benchmark.json
+            data/errori.json
+          if-no-files-found: error
+          retention-days: 14
