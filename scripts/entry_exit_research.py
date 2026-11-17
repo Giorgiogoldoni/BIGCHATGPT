@@ -149,7 +149,25 @@ def _trade_stats(trades):
     }
 
 
-def analyze_ticker(ticker, df, events, system_ids, cost_bps=COST_BPS):
+def _calendar_split_ranges(df, split_bounds=None):
+    """Intervalli temporali comuni; estremi finali esclusivi."""
+    dates = pd.DatetimeIndex(df.index).normalize()
+    if split_bounds is None:
+        start = dates[0]
+        end = dates[-1] + pd.Timedelta(days=1)
+        span = end - start
+        train_end = start + span * 0.60
+        validation_end = start + span * 0.80
+    else:
+        start, train_end, validation_end, end = [pd.Timestamp(x) for x in split_bounds]
+    return (
+        ("train", start, train_end),
+        ("validation", train_end, validation_end),
+        ("test", validation_end, end),
+    )
+
+
+def analyze_ticker(ticker, df, events, system_ids, cost_bps=COST_BPS, split_bounds=None):
     """Ritorna entry, exit e matrix rows per un ETF; esclude prezzi rettificati."""
     if df is None or len(df) < 100 or not {"Open", "High", "Low", "Close"}.issubset(df.columns):
         return {"entry": [], "exit": [], "matrix": []}
@@ -163,11 +181,13 @@ def analyze_ticker(ticker, df, events, system_ids, cost_bps=COST_BPS):
             stats = _forward_stats(df, cohort, horizon, cost_bps)
             if stats:
                 splits = {}
-                n_bars = len(df)
-                for label, lo, hi in (("train", 0, int(n_bars*.60)),
-                                      ("validation", int(n_bars*.60), int(n_bars*.80)),
-                                      ("test", int(n_bars*.80), n_bars)):
-                    part = [si for si in cohort if lo <= si < hi]
+                date_index = pd.DatetimeIndex(df.index).normalize()
+                for label, lo, hi in _calendar_split_ranges(df, split_bounds):
+                    # Purging: l'intero orizzonte forward deve restare nello stesso split.
+                    part = [si for si in cohort
+                            if lo <= date_index[si] < hi
+                            and si + horizon < len(df)
+                            and date_index[si + horizon] < hi]
                     part_stats = _forward_stats(df, part, horizon, cost_bps)
                     if part_stats:
                         splits[label] = {k: part_stats[k] for k in ("n", "mean", "median")}
@@ -198,13 +218,13 @@ def analyze_ticker(ticker, df, events, system_ids, cost_bps=COST_BPS):
                 })
             stats = _trade_stats(trades)
             if stats:
-                pos = {str(d.date()): i for i, d in enumerate(df.index)}
                 splits = {}
-                n_bars = len(df)
-                for label, lo, hi in (("train", 0, int(n_bars*.60)),
-                                      ("validation", int(n_bars*.60), int(n_bars*.80)),
-                                      ("test", int(n_bars*.80), n_bars)):
-                    part = [t for t in trades if lo <= pos.get(t["signal_date"], -1) < hi]
+                for label, lo, hi in _calendar_split_ranges(df, split_bounds):
+                    # Purging: segnale, ingresso e uscita devono ricadere nello stesso split.
+                    part = [t for t in trades
+                            if lo <= pd.Timestamp(t["signal_date"]) < hi
+                            and lo <= pd.Timestamp(t["entry_date"]) < hi
+                            and pd.Timestamp(t["exit_date"]) < hi]
                     part_stats = _trade_stats(part)
                     if part_stats and part_stats["n"]:
                         splits[label] = {k: part_stats[k] for k in ("n", "mean", "median", "profit_factor")}
@@ -280,7 +300,7 @@ def _rank_matrix(rows):
     return sorted(out, key=lambda x: (x["median_train_return"] if x["median_train_return"] is not None else -1e9, x["median_ticker_pf"] or 0), reverse=True)
 
 
-def build_payload(entry_rows, exit_rows, matrix_rows, generated, period, coverage):
+def build_payload(entry_rows, exit_rows, matrix_rows, generated, period, coverage, split_bounds=None):
     entry_rank = _rank_entries(entry_rows)
     exit_rank = _rank_exits(exit_rows)
     # Top 10 entry definitions and exit rules; matrix remains detailed by ticker and system.
@@ -298,6 +318,8 @@ def build_payload(entry_rows, exit_rows, matrix_rows, generated, period, coverag
         "execution": "Segnale a Close t; ingresso Open t+1. Stop intraday gap-aware; regole close-based eseguite all'Open successiva. Prezzi OHLC non rettificati, dividendi esclusi.",
         "cohort_rule": "Per ogni sistema/ticker, segnali distanziati di almeno 60 sedute e durata massima 60 barre; l'eventuale uscita forzata avviene all'Open successiva. La stessa coorte è applicata a tutte le uscite. Non rappresenta un portafoglio multi-ETF.",
         "universe_filter": "Strumenti dell'universo BIG non a leva e non inversi; classificazione dello strumento ereditata dall'universo sorgente.",
+        "split_method": "Finestre di calendario comuni a tutto l'universo: 60% train, 20% validation, 20% test; purging dei trade/forward horizon che attraversano i confini.",
+        "split_bounds": ({k: str(v.date() if hasattr(v, "date") else v) for k, v in zip(("start", "train_end_exclusive", "validation_end_exclusive", "end_exclusive"), split_bounds)} if split_bounds else None),
         "coverage": coverage,
         "horizons": list(HORIZONS), "exit_modes": list(EXIT_MODES),
         "entry_ranking": entry_rank, "entry_rows": entry_rows,
