@@ -1,6 +1,9 @@
 name: Aggiorna BIGCHATGPT
 
 on:
+  schedule:
+    - cron: '0 6 * * 1-5'
+    - cron: '0 6 * * 6'
   workflow_dispatch:
     inputs:
       classifica:
