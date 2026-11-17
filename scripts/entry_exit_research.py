@@ -194,6 +194,8 @@ def _rank_entries(rows):
         total_n = sum(x["n"] for x in items)
         out.append({"system": sid, "horizon": h, "tickers": len(items),
                     "signals": total_n, "median_ticker_return": round(float(np.median(medians)), 3),
+                    "median_train_return": round(float(np.median([x["splits"]["train"]["median"] for x in items if "train" in x.get("splits", {})])), 3) if any("train" in x.get("splits", {}) for x in items) else None,
+                    "median_test_return": round(float(np.median([x["splits"]["test"]["median"] for x in items if "test" in x.get("splits", {})])), 3) if any("test" in x.get("splits", {}) for x in items) else None,
                     "median_ticker_win_rate": round(float(np.median([x["win_rate"] for x in items])), 2),
                     "median_mae": round(float(np.median([x["mae_median"] for x in items])), 3),
                     "median_mfe": round(float(np.median([x["mfe_median"] for x in items])), 3),
@@ -216,6 +218,19 @@ def _rank_exits(rows):
     return sorted(out, key=lambda x: (x["median_ticker_return"], x["median_ticker_pf"] or 0), reverse=True)
 
 
+def _rank_matrix(rows):
+    groups = defaultdict(list)
+    for r in rows:
+        groups[(r["entry"], r["exit"])].append(r)
+    out = []
+    for (entry, mode), items in groups.items():
+        out.append({"entry": entry, "exit": mode, "tickers": len({x["ticker"] for x in items}),
+                    "trades": sum(x["n"] for x in items),
+                    "median_ticker_return": round(float(np.median([x["median"] for x in items])), 3),
+                    "median_ticker_pf": round(float(np.median([float(x["profit_factor"]) for x in items if isinstance(x["profit_factor"], (int, float))])), 3) if any(isinstance(x["profit_factor"], (int, float)) for x in items) else None})
+    return sorted(out, key=lambda x: (x["median_ticker_return"], x["median_ticker_pf"] or 0), reverse=True)
+
+
 def build_payload(entry_rows, exit_rows, matrix_rows, generated, period, coverage):
     entry_rank = _rank_entries(entry_rows)
     exit_rank = _rank_exits(exit_rows)
@@ -228,6 +243,7 @@ def build_payload(entry_rows, exit_rows, matrix_rows, generated, period, coverag
             break
     top_exits = [r["exit"] for r in exit_rank[:10]]
     matrix_top = [r for r in matrix_rows if r["entry"] in top_entries and r["exit"] in top_exits]
+    matrix_rank = _rank_matrix(matrix_top)
     return {
         "generated": generated, "period": period, "cost_round_trip_bps": COST_BPS,
         "execution": "Segnale a Close t; ingresso Open t+1. Stop intraday gap-aware; regole close-based eseguite all'Open successiva. Prezzi OHLC non rettificati, dividendi esclusi.",
@@ -238,7 +254,7 @@ def build_payload(entry_rows, exit_rows, matrix_rows, generated, period, coverag
         "entry_ranking": entry_rank, "entry_rows": entry_rows,
         "exit_ranking": exit_rank, "exit_rows": exit_rows,
         "top_entries_20d": top_entries, "top_exits": top_exits,
-        "matrix_ranking": matrix_top
+        "matrix_ranking": matrix_rank, "matrix_rows": matrix_top
     }
 
 
