@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BIGCHATGPT — Ricerca ingressi e uscite</title>
+<style>
+:root{color-scheme:light dark}body{font:15px system-ui,-apple-system,Segoe UI,sans-serif;margin:0;padding:18px;max-width:1200px;margin-inline:auto}
+h1{font-size:1.5rem}h2{font-size:1.15rem;margin-top:28px}.muted{opacity:.72}.scroll{overflow:auto}
+table{border-collapse:collapse;width:100%;font-size:.88rem}th,td{padding:9px 10px;border-bottom:1px solid #8885;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left}th{position:sticky;top:0;background:Canvas}
+.card{border:1px solid #8885;border-radius:12px;padding:12px;margin:12px 0}.status{padding:10px;border-radius:8px;background:#8882}
+a{color:LinkText}small{opacity:.7}
+</style>
+</head>
+<body>
+<h1>Ricerca indipendente — ingressi e uscite</h1>
+<p class="muted">Area sperimentale separata dalla Top 20. Segnale a Close t, ingresso Open t+1, costi round-trip 10 bps. Prezzi non rettificati, dividendi esclusi.</p>
+<div id="status" class="status">Caricamento dati…</div>
+<div class="card"><h2>Copertura e metodologia</h2><div id="meta"></div></div>
+<h2>Migliori ingressi — orizzonte 20 sedute</h2><div class="scroll"><table id="entries"></table></div>
+<h2>Migliori uscite</h2><div class="scroll"><table id="exits"></table></div>
+<h2>Matrice ingresso × uscita</h2><div class="scroll"><table id="matrix"></table></div>
+<p class="muted"><small>Risultati storici sperimentali, non segnali operativi né raccomandazioni. La selezione delle strategie richiede verifica out-of-sample e stabilità per anno e ticker.</small></p>
+<script>
+const fmt=(v)=>v===null||v===undefined?"—":typeof v==="number"?v.toFixed(2):v;
+function table(id,rows,cols){const el=document.getElementById(id);if(!rows||!rows.length){el.innerHTML="<tr><td>Dati non ancora disponibili</td></tr>";return}
+el.innerHTML="<thead><tr>"+cols.map(c=>"<th>"+c[1]+"</th>").join("")+"</tr></thead><tbody>"+rows.map(r=>"<tr>"+cols.map(c=>"<td>"+fmt(r[c[0]])+"</td>").join("")+"</tr>").join("")+"</tbody>"}
+fetch("./data/entry_exit_research.json").then(r=>{if(!r.ok)throw Error("Report non ancora pubblicato");return r.json()}).then(d=>{
+document.getElementById("status").textContent="Aggiornamento: "+d.generated+" · Periodo: "+d.period;
+const c=d.coverage||{};document.getElementById("meta").textContent="ETF analizzati: "+(c.tickers_covered??"—")+" · Errori ricerca: "+((c.errors||[]).length)+" · Errori download: "+((c.benchmark_download_errors||[]).length)+" · Coorte: "+d.cohort_rule;
+table("entries",(d.entry_ranking||[]).filter(x=>x.horizon===20),[["system","Sistema"],["tickers","ETF"],["signals","Segnali"],["median_train_return","Mediana train %"],["median_test_return","Mediana test %"],["median_ticker_edge","Edge vs baseline %"],["median_ticker_win_rate","Win rate %"]]);
+table("exits",d.exit_ranking,[["exit","Regola"],["tickers","ETF"],["entry_cohorts","Coorti"],["trades","Trade chiusi"],["median_ticker_return","Mediana %"],["median_ticker_pf","PF mediano"],["median_ticker_dd","DD sequenza %"]]);
+table("matrix",d.matrix_ranking,[["entry","Ingresso"],["exit","Uscita"],["tickers","ETF"],["trades","Trade"],["median_ticker_return","Mediana %"],["median_ticker_pf","PF mediano"]]);
+}).catch(e=>{document.getElementById("status").textContent=e.message+" — eseguire il workflow BIGCHATGPT con Classifica attiva."});
+</script>
+</body></html>
