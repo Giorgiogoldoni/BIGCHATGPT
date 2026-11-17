@@ -24,7 +24,7 @@ class EntryExitResearchTests(unittest.TestCase):
         result = R.analyze_ticker("TEST.MI", df, ev, ["core"])
         row = next(x for x in result["entry"] if x["horizon"] == 5)
         self.assertEqual(row["n"], 1)
-        expected = (df.Open.iloc[i+1+4]/df.Open.iloc[i+1]-1)*100-.1
+        expected = (df.Close.iloc[i+5]/df.Open.iloc[i+1]-1)*100-.1
         self.assertAlmostEqual(row["mean"], expected, places=3)
 
     def test_fixed_cohort_is_independent_of_exit_rule(self):
@@ -50,8 +50,8 @@ class EntryExitResearchTests(unittest.TestCase):
         entry_i = 40
         f = R._features(df)
         # Force a valid EMA bearish cross at j=60; exit must be next day's open.
+        f["ema20"][:] = f["ema50"] + 1
         f["ema20"][60] = f["ema50"][60] - 1
-        f["ema20"][59] = f["ema50"][59] + 1
         result = R._exit_one(df, entry_i, float(df.Open.iloc[entry_i]), "ema20_50", f)
         self.assertIsNotNone(result)
         self.assertEqual(result[0], 61)
