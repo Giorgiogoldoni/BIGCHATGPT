@@ -1,6 +1,9 @@
 name: Aggiorna BIGCHATGPT
 
 on:
+  schedule:
+    - cron: '30 23 * * 1-5'
+    - cron: '0 6 * * 6'
   workflow_dispatch:
     inputs:
       classifica:
@@ -34,7 +37,7 @@ jobs:
       - name: Dipendenze
         run: pip install pandas numpy yfinance reportlab openpyxl
       - name: Test causalita' e benchmark sistemi
-        run: python -m unittest test_causality.py test_score.py test_benchmark.py test_reversion_audit.py test_entry_exit_research.py -v
+        run: python -m unittest test_causality.py test_score.py test_benchmark.py test_reversion_audit.py test_entry_exit_research.py test_mr_smr_watchlist.py -v
         working-directory: scripts
       - name: Scarica dati e calcola segnali
         run: python build.py
@@ -51,7 +54,7 @@ jobs:
       - name: Prepara il sito
         run: |
           mkdir _site
-          cp index.html grafico.html classifica.html mercato.html top20.html benchmark.html research.html _site/
+          cp index.html grafico.html classifica.html mercato.html top20.html benchmark.html research.html mr-smr-watchlist.html navigation.js _site/
           cp -r data _site/data
       - uses: actions/upload-pages-artifact@v3
         with:
