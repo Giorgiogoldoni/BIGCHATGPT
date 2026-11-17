@@ -144,6 +144,16 @@ def analyze_ticker(ticker, df, events, system_ids, cost_bps=COST_BPS):
         for horizon in HORIZONS:
             stats = _forward_stats(df, cohort, horizon, cost_bps)
             if stats:
+                splits = {}
+                n_bars = len(df)
+                for label, lo, hi in (("train", 0, int(n_bars*.60)),
+                                      ("validation", int(n_bars*.60), int(n_bars*.80)),
+                                      ("test", int(n_bars*.80), n_bars)):
+                    part = [si for si in cohort if lo <= si < hi]
+                    part_stats = _forward_stats(df, part, horizon, cost_bps)
+                    if part_stats:
+                        splits[label] = {k: part_stats[k] for k in ("n", "mean", "median")}
+                stats["splits"] = splits
                 entry_rows.append({"ticker": ticker, "system": sid, "horizon": horizon, **stats})
         for mode in EXIT_MODES:
             trades = []
@@ -168,7 +178,7 @@ def analyze_ticker(ticker, df, events, system_ids, cost_bps=COST_BPS):
             stats = _trade_stats(trades)
             if stats:
                 exit_rows.append({"ticker": ticker, "entry_system": sid, "exit": mode, **stats,
-                                  "cohort_signals": len(cohort), "trades": trades})
+                                  "cohort_signals": len(cohort), "open_marked": max(0, len(cohort)-len(trades))})
                 matrix_rows.append({"ticker": ticker, "entry": sid, "exit": mode, **stats})
     return {"entry": entry_rows, "exit": exit_rows, "matrix": matrix_rows}
 
@@ -188,7 +198,7 @@ def _rank_entries(rows):
                     "median_mae": round(float(np.median([x["mae_median"] for x in items])), 3),
                     "median_mfe": round(float(np.median([x["mfe_median"] for x in items])), 3),
                     "eligible": len(items) >= MIN_SIGNALS})
-    return sorted(out, key=lambda x: (x["horizon"], x["median_ticker_return"]), reverse=True)
+    return sorted(out, key=lambda x: (x["horizon"], x["median_train_return"] if x["median_train_return"] is not None else -1e9), reverse=True)
 
 
 def _rank_exits(rows):
@@ -241,8 +251,9 @@ def write_outputs(data_dir, payload):
             for key, sheet in (("entry_ranking", "Entry ranking"), ("exit_ranking", "Exit ranking"),
                                ("matrix_ranking", "Entry x Exit")):
                 pd.DataFrame(payload.get(key, [])).to_excel(writer, sheet_name=sheet, index=False)
-            pd.DataFrame(payload.get("entry_rows", [])).drop(columns=["yearly"], errors="ignore").to_excel(writer, sheet_name="Entry per ETF", index=False)
-            pd.DataFrame(payload.get("exit_rows", [])).drop(columns=["trades"], errors="ignore").to_excel(writer, sheet_name="Exit per ETF", index=False)
+            pd.DataFrame(payload.get("entry_rows", [])).drop(columns=["yearly", "splits"], errors="ignore").to_excel(writer, sheet_name="Entry per ETF", index=False)
+            pd.DataFrame(payload.get("exit_rows", [])).to_excel(writer, sheet_name="Exit per ETF", index=False)
+            pd.DataFrame(payload.get("matrix_rows", [])).to_excel(writer, sheet_name="Matrix per ETF", index=False)
     except Exception as exc:
         payload["excel_error"] = repr(exc)
         (path / "entry_exit_research.json").write_text(json.dumps(payload, separators=(",", ":")), encoding="utf-8")
