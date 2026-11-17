@@ -1,16 +1,7 @@
 name: Ricerca Entry Exit — build sperimentale
 
 on:
-  push:
-    branches:
-      - research/entry-exit-engine
-    paths:
-      - "scripts/entry_exit_research.py"
-      - "scripts/build.py"
-      - "scripts/systems.py"
-      - "scripts/benchmark.py"
-      - "scripts/test_entry_exit_research.py"
-      - ".github/workflows/entry-exit-research.yml"
+  workflow_dispatch:
 
 permissions:
   contents: read
