@@ -1,0 +1,68 @@
+name: Email report BIGCHATGPT
+
+on:
+  workflow_run:
+    workflows: ["Aggiorna BIGCHATGPT"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+jobs:
+  send-report:
+    if: github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Invia notifica email esito aggiornamento
+        env:
+          MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
+          MAIL_APP_PASSWORD: ${{ secrets.MAIL_APP_PASSWORD }}
+          MAIL_TO: giorgiorgio.goldoni.me@gmail.com
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_UPDATED_AT: ${{ github.event.workflow_run.updated_at }}
+          RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          python - <<'PY'
+          import os, smtplib
+          from email.message import EmailMessage
+          from datetime import datetime
+          from zoneinfo import ZoneInfo
+
+          username = os.environ["MAIL_USERNAME"]
+          password = os.environ["MAIL_APP_PASSWORD"]
+          recipient = os.environ["MAIL_TO"]
+          conclusion = os.environ["RUN_CONCLUSION"]
+          run_url = os.environ["RUN_URL"]
+          updated = datetime.fromisoformat(os.environ["RUN_UPDATED_AT"].replace("Z", "+00:00"))
+          local_time = updated.astimezone(ZoneInfo("Europe/Rome")).strftime("%d/%m/%Y alle %H:%M:%S")
+          ok = conclusion == "success"
+          status = "COMPLETATO CON SUCCESSO" if ok else f"TERMINATO CON ESITO: {conclusion.upper()}"
+          subject = f"BIGCHATGPT — aggiornamento {status}"
+          body = f"""Rapporto automatico BIGCHATGPT
+
+          Stato workflow: {status}
+          Data e ora di conclusione: {local_time} (ora italiana)
+          Run GitHub: #{os.environ['RUN_NUMBER']}
+          Commit: {os.environ['RUN_HEAD_SHA'][:12]}
+
+          {"L'aggiornamento risulta completato. Consulta il sito per TOP20, MR, SMR e benchmark." if ok else "ATTENZIONE: aggiornamento non riuscito. Non considerare i dati del sito come appena aggiornati finché il workflow non viene corretto e completato."}
+
+          Sito BIGCHATGPT: https://giorgiogoldoni.github.io/BIGCHATGPT/
+          Dettaglio workflow: {run_url}
+
+          Questa email è generata automaticamente da GitHub Actions.
+          """
+          msg = EmailMessage()
+          msg["From"] = username
+          msg["To"] = recipient
+          msg["Subject"] = subject
+          msg.set_content(body)
+          with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as server:
+              server.login(username, password)
+              server.send_message(msg)
+          print(f"Email inviata a {recipient}: {status}")
+          PY
