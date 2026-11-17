@@ -69,8 +69,17 @@ def _forward_stats(df, signal_indices, horizon, cost_bps=COST_BPS):
     if not returns:
         return None
     vals = np.asarray(returns)
+    baseline = []
+    for entry_i in range(1, max(1, n-horizon), horizon):
+        exit_i = entry_i + horizon - 1
+        if exit_i < n and np.isfinite(opn[entry_i]) and opn[entry_i] > 0 and np.isfinite(close[exit_i]):
+            baseline.append((close[exit_i]/opn[entry_i]-1)*100-cost_bps/100)
+    baseline_median = float(np.median(baseline)) if baseline else None
     return {
-        "n": len(vals), "win_rate": round(float(np.mean(vals > 0))*100, 2),
+        "n": len(vals), "baseline_n": len(baseline),
+        "baseline_median": round(baseline_median, 3) if baseline_median is not None else None,
+        "median_edge": round(float(np.median(vals))-baseline_median, 3) if baseline_median is not None else None,
+        "win_rate": round(float(np.mean(vals > 0))*100, 2),
         "mean": round(float(np.mean(vals)), 3),
         "median": round(float(np.median(vals)), 3),
         "std": round(float(np.std(vals, ddof=1)), 3) if len(vals) > 1 else None,
@@ -157,6 +166,7 @@ def analyze_ticker(ticker, df, events, system_ids, cost_bps=COST_BPS):
                 entry_rows.append({"ticker": ticker, "system": sid, "horizon": horizon, **stats})
         for mode in EXIT_MODES:
             trades = []
+            open_marks = []
             for si in cohort:
                 ei = si + 1
                 entry = float(df["Open"].iloc[ei])
@@ -164,6 +174,8 @@ def analyze_ticker(ticker, df, events, system_ids, cost_bps=COST_BPS):
                     continue
                 result = _exit_one(df, ei, entry, mode, f)
                 if result is None:
+                    mark = float(df["Close"].iloc[-1])
+                    open_marks.append((mark/entry-1)*100-cost_bps/100)
                     continue
                 xi, px, reason = result
                 gross = (px/entry - 1)*100
@@ -177,8 +189,10 @@ def analyze_ticker(ticker, df, events, system_ids, cost_bps=COST_BPS):
                 })
             stats = _trade_stats(trades)
             if stats:
+                stats["open_marked"] = len(open_marks)
+                stats["open_mark_median"] = round(float(np.median(open_marks)), 3) if open_marks else None
                 exit_rows.append({"ticker": ticker, "entry_system": sid, "exit": mode, **stats,
-                                  "cohort_signals": len(cohort), "open_marked": max(0, len(cohort)-len(trades))})
+                                  "cohort_signals": len(cohort)})
                 matrix_rows.append({"ticker": ticker, "entry": sid, "exit": mode, **stats})
     return {"entry": entry_rows, "exit": exit_rows, "matrix": matrix_rows}
 
@@ -196,6 +210,7 @@ def _rank_entries(rows):
                     "signals": total_n, "median_ticker_return": round(float(np.median(medians)), 3),
                     "median_train_return": round(float(np.median([x["splits"]["train"]["median"] for x in items if "train" in x.get("splits", {})])), 3) if any("train" in x.get("splits", {}) for x in items) else None,
                     "median_test_return": round(float(np.median([x["splits"]["test"]["median"] for x in items if "test" in x.get("splits", {})])), 3) if any("test" in x.get("splits", {}) for x in items) else None,
+                    "median_ticker_edge": round(float(np.median([x["median_edge"] for x in items if x.get("median_edge") is not None])), 3) if any(x.get("median_edge") is not None for x in items) else None,
                     "median_ticker_win_rate": round(float(np.median([x["win_rate"] for x in items])), 2),
                     "median_mae": round(float(np.median([x["mae_median"] for x in items])), 3),
                     "median_mfe": round(float(np.median([x["mfe_median"] for x in items])), 3),
