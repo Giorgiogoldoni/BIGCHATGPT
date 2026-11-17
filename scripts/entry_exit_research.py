@@ -192,6 +192,17 @@ def analyze_ticker(ticker, df, events, system_ids, cost_bps=COST_BPS):
                 })
             stats = _trade_stats(trades)
             if stats:
+                pos = {str(d.date()): i for i, d in enumerate(df.index)}
+                splits = {}
+                n_bars = len(df)
+                for label, lo, hi in (("train", 0, int(n_bars*.60)),
+                                      ("validation", int(n_bars*.60), int(n_bars*.80)),
+                                      ("test", int(n_bars*.80), n_bars)):
+                    part = [t for t in trades if lo <= pos.get(t["signal_date"], -1) < hi]
+                    part_stats = _trade_stats(part)
+                    if part_stats and part_stats["n"]:
+                        splits[label] = {k: part_stats[k] for k in ("n", "mean", "median", "profit_factor")}
+                stats["splits"] = splits
                 stats["open_marked"] = len(open_marks)
                 stats["open_mark_median"] = round(float(np.median(open_marks)), 3) if open_marks else None
                 exit_rows.append({"ticker": ticker, "entry_system": sid, "exit": mode, **stats,
@@ -234,9 +245,11 @@ def _rank_exits(rows):
                     "entry_cohorts": len({x["entry_system"] for x in items}),
                     "trades": sum(x["n"] for x in items),
                     "median_ticker_return": round(float(np.median([x["median"] for x in items])), 3),
+                    "median_train_return": round(float(np.median([x["splits"]["train"]["median"] for x in items if "train" in x.get("splits", {})])), 3) if any("train" in x.get("splits", {}) for x in items) else None,
+                    "median_test_return": round(float(np.median([x["splits"]["test"]["median"] for x in items if "test" in x.get("splits", {})])), 3) if any("test" in x.get("splits", {}) for x in items) else None,
                     "median_ticker_pf": round(float(np.median([float(x["profit_factor"]) for x in items if isinstance(x["profit_factor"], (int, float))])), 3) if any(isinstance(x["profit_factor"], (int, float)) for x in items) else None,
                     "median_ticker_dd": round(float(np.median([x["max_trade_sequence_dd"] for x in items])), 2)})
-    return sorted(out, key=lambda x: (x["median_ticker_return"], x["median_ticker_pf"] or 0), reverse=True)
+    return sorted(out, key=lambda x: (x["median_train_return"] if x["median_train_return"] is not None else -1e9, x["median_ticker_pf"] or 0), reverse=True)
 
 
 def _rank_matrix(rows):
@@ -251,8 +264,10 @@ def _rank_matrix(rows):
         out.append({"entry": entry, "exit": mode, "tickers": len({x["ticker"] for x in items}),
                     "trades": sum(x["n"] for x in items),
                     "median_ticker_return": round(float(np.median([x["median"] for x in items])), 3),
+                    "median_train_return": round(float(np.median([x["splits"]["train"]["median"] for x in items if "train" in x.get("splits", {})])), 3) if any("train" in x.get("splits", {}) for x in items) else None,
+                    "median_test_return": round(float(np.median([x["splits"]["test"]["median"] for x in items if "test" in x.get("splits", {})])), 3) if any("test" in x.get("splits", {}) for x in items) else None,
                     "median_ticker_pf": round(float(np.median([float(x["profit_factor"]) for x in items if isinstance(x["profit_factor"], (int, float))])), 3) if any(isinstance(x["profit_factor"], (int, float)) for x in items) else None})
-    return sorted(out, key=lambda x: (x["median_ticker_return"], x["median_ticker_pf"] or 0), reverse=True)
+    return sorted(out, key=lambda x: (x["median_train_return"] if x["median_train_return"] is not None else -1e9, x["median_ticker_pf"] or 0), reverse=True)
 
 
 def build_payload(entry_rows, exit_rows, matrix_rows, generated, period, coverage):
@@ -272,7 +287,7 @@ def build_payload(entry_rows, exit_rows, matrix_rows, generated, period, coverag
         "generated": generated, "period": period, "cost_round_trip_bps": COST_BPS,
         "execution": "Segnale a Close t; ingresso Open t+1. Stop intraday gap-aware; regole close-based eseguite all'Open successiva. Prezzi OHLC non rettificati, dividendi esclusi.",
         "cohort_rule": "Per ogni sistema/ticker, segnali distanziati di almeno 60 sedute; la stessa coorte è applicata a tutte le uscite. Non rappresenta un portafoglio multi-ETF.",
-        "universe_filter": "Solo strumenti già filtrati dal benchmark principale: esclusi leva e inversi.",
+        "universe_filter": "Strumenti dell'universo BIG non a leva e non inversi; classificazione dello strumento ereditata dall'universo sorgente.",
         "coverage": coverage,
         "horizons": list(HORIZONS), "exit_modes": list(EXIT_MODES),
         "entry_ranking": entry_rank, "entry_rows": entry_rows,
@@ -292,7 +307,7 @@ def write_outputs(data_dir, payload):
                                ("matrix_ranking", "Entry x Exit")):
                 pd.DataFrame(payload.get(key, [])).to_excel(writer, sheet_name=sheet, index=False)
             pd.DataFrame(payload.get("entry_rows", [])).drop(columns=["yearly", "splits"], errors="ignore").to_excel(writer, sheet_name="Entry per ETF", index=False)
-            pd.DataFrame(payload.get("exit_rows", [])).to_excel(writer, sheet_name="Exit per ETF", index=False)
+            pd.DataFrame(payload.get("exit_rows", [])).drop(columns=["splits"], errors="ignore").to_excel(writer, sheet_name="Exit per ETF", index=False)
             pd.DataFrame(payload.get("matrix_rows", [])).to_excel(writer, sheet_name="Matrix per ETF", index=False)
     except Exception as exc:
         payload["excel_error"] = repr(exc)
