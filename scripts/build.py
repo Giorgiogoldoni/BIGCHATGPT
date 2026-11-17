@@ -9,6 +9,7 @@ import score as SC
 import benchmark as BM
 import reversion_audit as RA
 import entry_exit_research as ER
+import mr_smr_watchlist as MW
 import mercato as M
 from issuers import issuer
 
@@ -83,6 +84,7 @@ def scrivi(universo, dati):
     benchmark_rows, benchmark_forward = [], []
     reversion_rows = []
     reversion_errors = []
+    watchlist_rows = []
     research_entry, research_exit, research_matrix, research_errors = [], [], [], []
     research_covered = []
     for u in universo:
@@ -119,6 +121,8 @@ def scrivi(universo, dati):
                         print("ERRORE audit MR/SMR", u["t"], repr(audit_error)[:120])
                 ev = [e for e in ev if e[0] >= str(d.index[0].date())]
                 meta["tr"] = [t for t in meta["tr"] if t[1] >= str(d.index[0].date())]
+        if not u["lv"] and not u["inv"]:
+            watchlist_rows.extend(MW.ticker_rows(u["t"], u["n"], d, meta["tr"]))
         except Exception as e:
             print("ERRORE calcolo", u["t"], repr(e)[:100]); errori.append(u["t"]); continue
         last, prev = d.iloc[-1], d.iloc[-2]; ult = str(d.index[-1].date())
@@ -137,6 +141,8 @@ def scrivi(universo, dati):
             sta=S.stato_etf(meta["tr"], ult), nuovo=bool(meta["nuovo"]), core=meta["core"], ne=len(ev)))
     sistemi = [dict(id=s["id"], nome=s["nome"], colore=s["colore"]) for s in S.SYSTEMS]
     (DATA / "index.json").write_text(json.dumps(dict(gen=gen, sistemi=sistemi, righe=righe), separators=(",", ":")), encoding="utf-8")
+    watchlist_payload = MW.build_payload(watchlist_rows, gen)
+    (DATA / "mr_smr_watchlist.json").write_text(json.dumps(watchlist_payload, separators=(",", ":")), encoding="utf-8")
     (DATA / "errori.json").write_text(json.dumps(errori), encoding="utf-8")
     M.scrivi(DATA, merc_rows, gen)
     SC.write(DATA, score_rows, gen, PERIODO)
