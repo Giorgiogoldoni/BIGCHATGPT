@@ -82,5 +82,26 @@ class EntryExitResearchTests(unittest.TestCase):
         self.assertEqual(len({r["cohort_signals"] for r in result["exit"]}), 1)
 
 
+    def test_calendar_splits_are_shared_and_cross_boundary_trades_are_purged(self):
+        df = sample_df(360)
+        indices = (40, 100, 160)
+        ev = [(str(df.index[i].date()), "core", "BUY", float(df.Close.iloc[i]), "test")
+              for i in indices]
+        bounds = (df.index[0], df.index[115], df.index[220],
+                  df.index[-1] + pd.Timedelta(days=1))
+        result = R.analyze_ticker("TEST.MI", df, ev, ["core"], split_bounds=bounds)
+
+        forward = next(x for x in result["entry"] if x["horizon"] == 20)
+        self.assertEqual(forward["splits"]["train"]["n"], 1)
+        self.assertEqual(forward["splits"]["validation"]["n"], 1)
+
+        timed = next(x for x in result["exit"] if x["exit"] == "time_20")
+        self.assertEqual(timed["splits"]["train"]["n"], 1)
+        self.assertEqual(timed["splits"]["validation"]["n"], 1)
+        # Il segnale a barra 100 è nel train ma la sua uscita cade oltre
+        # il confine: non deve contaminare né train né validation.
+        self.assertEqual(timed["n"], 3)
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
