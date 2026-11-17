@@ -124,7 +124,8 @@ def _exit_one(df, entry_i, entry, mode, f):
 
 def _trade_stats(trades):
     if not trades:
-        return None
+        return {"n": 0, "win_rate": None, "mean": None, "median": None,
+                "profit_factor": None, "max_trade_sequence_dd": None, "avg_bars": None}
     vals = np.asarray([t["net_return"] for t in trades], dtype=float)
     wins, losses = vals[vals > 0], vals[vals < 0]
     eq = np.cumprod(1 + vals/100)
@@ -224,6 +225,9 @@ def _rank_exits(rows):
         groups[r["exit"]].append(r)
     out = []
     for mode, items in groups.items():
+        items = [x for x in items if x.get("n", 0) > 0]
+        if not items:
+            continue
         out.append({"exit": mode, "tickers": len({x["ticker"] for x in items}),
                     "entry_cohorts": len({x["entry_system"] for x in items}),
                     "trades": sum(x["n"] for x in items),
@@ -239,6 +243,9 @@ def _rank_matrix(rows):
         groups[(r["entry"], r["exit"])].append(r)
     out = []
     for (entry, mode), items in groups.items():
+        items = [x for x in items if x.get("n", 0) > 0]
+        if not items:
+            continue
         out.append({"entry": entry, "exit": mode, "tickers": len({x["ticker"] for x in items}),
                     "trades": sum(x["n"] for x in items),
                     "median_ticker_return": round(float(np.median([x["median"] for x in items])), 3),
