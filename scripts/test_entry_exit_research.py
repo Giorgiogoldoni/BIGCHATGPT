@@ -50,7 +50,7 @@ class EntryExitResearchTests(unittest.TestCase):
         entry_i = 40
         f = R._features(df)
         # Force a valid EMA bearish cross at j=60; exit must be next day's open.
-        f["ema20"][:] = f["ema50"] + 1
+        f["ema20"] = np.array(f["ema50"] + 1, copy=True)
         f["ema20"][60] = f["ema50"][60] - 1
         result = R._exit_one(df, entry_i, float(df.Open.iloc[entry_i]), "ema20_50", f)
         self.assertIsNotNone(result)
