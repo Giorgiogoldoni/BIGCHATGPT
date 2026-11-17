@@ -8,6 +8,7 @@ import rank
 import score as SC
 import benchmark as BM
 import reversion_audit as RA
+import entry_exit_research as ER
 import mercato as M
 from issuers import issuer
 
@@ -82,6 +83,8 @@ def scrivi(universo, dati):
     benchmark_rows, benchmark_forward = [], []
     reversion_rows = []
     reversion_errors = []
+    research_entry, research_exit, research_matrix, research_errors = [], [], [], []
+    research_covered = []
     for u in universo:
         full = dati.get(u["t"])
         if full is None: errori.append(u["t"]); continue
@@ -97,6 +100,17 @@ def scrivi(universo, dati):
                 result = BM.ticker_benchmark(u["t"], full, ev, meta, instrument=u)
                 benchmark_rows.extend(result["rows"])
                 benchmark_forward.extend(result["forward"])
+                if not u["lv"] and not u["inv"]:
+                    try:
+                        research_events = list(ev) + BM._candidate_events(full)
+                        research_ids = [s["id"] for s in S.SYSTEMS] + ["chat_trend_pullback"]
+                        rr = ER.analyze_ticker(u["t"], full, research_events, research_ids)
+                        research_entry.extend(rr["entry"])
+                        research_exit.extend(rr["exit"])
+                        research_matrix.extend(rr["matrix"])
+                        research_covered.append(u["t"])
+                    except Exception as research_error:
+                        research_errors.append({"ticker": u["t"], "error": repr(research_error)[:180]})
                 if not u["lv"] and not u["inv"]:
                     try:
                         reversion_rows.extend(RA.audit_ticker(u["t"], full, ev, meta))
@@ -146,6 +160,13 @@ def scrivi(universo, dati):
         (DATA / "reversion_audit.json").write_text(json.dumps(audit_payload, separators=(",", ":")), encoding="utf-8")
         print("audit MR/SMR ETF:", len({r["ticker"] for r in reversion_rows}),
               "| righe ETF/sistema:", len(reversion_rows))
+        research_payload = ER.build_payload(research_entry, research_exit, research_matrix, gen, PERIODO,
+            {"tickers_covered": len(research_covered), "tickers": research_covered,
+             "errors": research_errors, "benchmark_download_errors": errori})
+        ER.write_outputs(DATA, research_payload)
+        print("ricerca entry/exit ETF:", len(research_covered), "| entry:", len(research_entry),
+              "| exit:", len(research_exit), "| matrix:", len(research_matrix),
+              "| errori:", len(research_errors))
 
 
 def recupera_classifica():
