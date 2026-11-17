@@ -5,7 +5,8 @@
     ["classifica.html", "Classifica"],
     ["mercato.html", "Mercato"],
     ["benchmark.html", "Benchmark"],
-    ["research.html", "Ricerca"]
+    ["research.html", "Ricerca"],
+    ["mr-smr-watchlist.html", "MR / SMR"]
   ];
   const path = location.pathname.split("/").pop() || "index.html";
   const active = path === "grafico.html" ? "index.html" : path;
