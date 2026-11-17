@@ -87,6 +87,16 @@ def scrivi(universo, dati):
     watchlist_rows = []
     research_entry, research_exit, research_matrix, research_errors = [], [], [], []
     research_covered = []
+    research_split_bounds = None
+    if CLASSIFICA and dati:
+        # Confini identici per tutti gli ETF: l'universo non viene diviso in base
+        # alla diversa anzianità di quotazione di ciascun prodotto.
+        latest = max(pd.Timestamp(frame.index[-1]).normalize() for frame in dati.values() if frame is not None and len(frame))
+        split_end = latest + pd.Timedelta(days=1)
+        split_start = split_end - pd.DateOffset(years=5)
+        span = split_end - split_start
+        research_split_bounds = (split_start, split_start + span * 0.60,
+                                 split_start + span * 0.80, split_end)
     for u in universo:
         full = dati.get(u["t"])
         if full is None: errori.append(u["t"]); continue
@@ -106,7 +116,8 @@ def scrivi(universo, dati):
                     try:
                         research_events = list(ev) + BM._candidate_events(full)
                         research_ids = [s["id"] for s in S.SYSTEMS] + ["chat_trend_pullback"]
-                        rr = ER.analyze_ticker(u["t"], full, research_events, research_ids)
+                        rr = ER.analyze_ticker(u["t"], full, research_events, research_ids,
+                                                split_bounds=research_split_bounds)
                         research_entry.extend(rr["entry"])
                         research_exit.extend(rr["exit"])
                         research_matrix.extend(rr["matrix"])
@@ -168,7 +179,8 @@ def scrivi(universo, dati):
               "| righe ETF/sistema:", len(reversion_rows))
         research_payload = ER.build_payload(research_entry, research_exit, research_matrix, gen, PERIODO,
             {"tickers_covered": len(research_covered), "tickers": research_covered,
-             "errors": research_errors, "benchmark_download_errors": errori})
+             "errors": research_errors, "benchmark_download_errors": errori},
+            split_bounds=research_split_bounds)
         ER.write_outputs(DATA, research_payload)
         print("ricerca entry/exit ETF:", len(research_covered), "| entry:", len(research_entry),
               "| exit:", len(research_exit), "| matrix:", len(research_matrix),
