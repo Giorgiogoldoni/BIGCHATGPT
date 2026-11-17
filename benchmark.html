@@ -51,4 +51,5 @@ body.innerHTML=a.map(x=>'<tr><td>'+(names[x.system]||x.system)+'</td><td>'+x.exi
 sys.onchange=render;ex.onchange=render;sysf.onchange=renderForward;hor.onchange=renderForward;render();renderForward();
 }catch(e){meta.innerHTML='<span class="err">'+e.message+'</span> · Eseguire la classifica quinquennale da GitHub Actions con classifica=true.'}
 })();
-</script></body></html>
+</script><script src="navigation.js" defer></script>
+</body></html>
