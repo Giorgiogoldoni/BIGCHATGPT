@@ -91,18 +91,18 @@ def scrivi(universo, dati):
             ev, meta = S.calcola(analisi_df)
             try: score_rows.append(SC.calculate(u, analisi_df, ev, meta))
             except Exception as score_error: print("ERRORE score", u["t"], repr(score_error)[:100])
+            # Audit operativo MR/SMR ricalcolato a ogni aggiornamento, non solo nella classifica settimanale.
+            if not u["lv"] and not u["inv"]:
+                try: reversion_rows.extend(RA.audit_ticker(u["t"], analisi_df, ev, meta))
+                except Exception as audit_error:
+                    reversion_errors.append(u["t"])
+                    print("ERRORE audit MR/SMR", u["t"], repr(audit_error)[:120])
             if CLASSIFICA:
                 rank_rows.append(rank.riga(u["t"], full, ev))
                 # Il benchmark esclude ETF/ETN/ETC a leva e inversi; score e motore BIG restano invariati.
                 result = BM.ticker_benchmark(u["t"], full, ev, meta, instrument=u)
                 benchmark_rows.extend(result["rows"])
                 benchmark_forward.extend(result["forward"])
-                if not u["lv"] and not u["inv"]:
-                    try:
-                        reversion_rows.extend(RA.audit_ticker(u["t"], full, ev, meta))
-                    except Exception as audit_error:
-                        reversion_errors.append(u["t"])
-                        print("ERRORE audit MR/SMR", u["t"], repr(audit_error)[:120])
                 ev = [e for e in ev if e[0] >= str(d.index[0].date())]
                 meta["tr"] = [t for t in meta["tr"] if t[1] >= str(d.index[0].date())]
         except Exception as e:
@@ -130,22 +130,23 @@ def scrivi(universo, dati):
     if CLASSIFICA:
         rank.scrivi(DATA, rank_rows, gen)
         BM.write(DATA, benchmark_rows, benchmark_forward, gen, PERIODO)
-        audit_payload = {
-            "generated": gen, "period": PERIODO, "cost_round_trip_bps": 10,
-            "universe_filter": "ETF non a leva e non inversi; stesso universo del benchmark.",
-            "execution": "Segnale a Close t, ingresso Open t+1; prima verifica uscita alla Close di t+1; prezzi Close non rettificati, dividendi esclusi.",
-            "methods": {
-                "old_close_entry": "Ricostruzione delle posizioni originali BIG: ingresso al Close del segnale e uscita originale.",
-                "open_next_day": "Simulazione indipendente: ingresso all'Open successiva, uscite ricalcolate sul prezzo effettivo; MR = Bollinger superiore o Chandelier 3 ATR; SMR = Bollinger superiore o stop close-based -15%.",
-            },
-            "audit_errors": reversion_errors,
-            "summary": RA.aggregate_audit(reversion_rows),
-            "yearly_summary": RA.aggregate_yearly_audit(reversion_rows),
-            "tickers": reversion_rows,
-        }
-        (DATA / "reversion_audit.json").write_text(json.dumps(audit_payload, separators=(",", ":")), encoding="utf-8")
-        print("audit MR/SMR ETF:", len({r["ticker"] for r in reversion_rows}),
-              "| righe ETF/sistema:", len(reversion_rows))
+    audit_payload = {
+        "generated": gen, "period": PERIODO, "cost_round_trip_bps": 10,
+        "universe_filter": "ETF non a leva e non inversi; stesso universo del benchmark.",
+        "execution": "Segnale a Close t, ingresso Open t+1; prima verifica uscita alla Close di t+1; prezzi Close non rettificati, dividendi esclusi.",
+        "methods": {
+            "old_close_entry": "Ricostruzione delle posizioni originali BIG: ingresso al Close del segnale e uscita originale.",
+            "open_next_day": "Simulazione indipendente: ingresso all'Open successiva, uscite ricalcolate sul prezzo effettivo; MR = Bollinger superiore o Chandelier 3 ATR; SMR = Bollinger superiore o stop close-based -15%.",
+        },
+        "audit_errors": reversion_errors,
+        "summary": RA.aggregate_audit(reversion_rows),
+        "yearly_summary": RA.aggregate_yearly_audit(reversion_rows),
+        "tickers": reversion_rows,
+    }
+    (DATA / "reversion_audit.json").write_text(json.dumps(audit_payload, separators=(",", ":")), encoding="utf-8")
+    print("audit MR/SMR ETF:", len({r["ticker"] for r in reversion_rows}),
+          "| righe ETF/sistema:", len(reversion_rows))
+
 
 
 def recupera_classifica():
