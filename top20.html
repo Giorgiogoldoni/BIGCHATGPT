@@ -11,6 +11,12 @@ header,.bar,.note,.wrap{padding:12px 18px}header{padding-bottom:4px}h1{font-size
 .n{text-align:right;font-variant-numeric:tabular-nums}.pos{color:#147d45}.neg{color:#b42318}.score{font-weight:700}.muted{color:#667085}.tag{display:inline-block;border-radius:4px;background:#f0f2f5;color:#475467;padding:2px 6px;font-size:11px}
 .note{max-width:1200px;color:#475467;font-size:12px}.links{display:flex;gap:8px;flex-wrap:wrap}.rank{font-weight:700;color:#667085}.name{white-space:normal;min-width:220px}.empty{padding:24px;color:#667085}
 @media(max-width:700px){header,.bar,.note,.wrap{padding:10px 12px}h1{font-size:20px}}
+
+/* Navigazione inferiore condivisa */
+body{padding-bottom:76px!important}
+.big-nav{position:fixed;z-index:9999;left:0;right:0;bottom:0;display:flex;gap:4px;align-items:center;justify-content:flex-start;overflow-x:auto;white-space:nowrap;padding:7px max(8px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #d8dee8;box-shadow:0 -3px 12px rgba(16,24,40,.08);-webkit-overflow-scrolling:touch}
+.big-nav a{flex:0 0 auto;display:inline-block;padding:9px 12px;border-radius:8px;color:#344054!important;text-decoration:none!important;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,sans-serif}
+.big-nav a.active{background:#e8eefc;color:#174ea6!important}
 </style>
 </head>
 <body>
@@ -84,5 +90,7 @@ fetch("data/score.json").then(r=>{if(!r.ok)throw new Error("score non disponibil
 ["q","horizon"].forEach(id=>$(id).addEventListener("input",render));
 $("refresh").onclick=render;
 </script>
+
+<nav class="big-nav" aria-label="Navigazione principale BIGCHATGPT"><a href="index.html">BIG</a><a href="top20.html" class="active" aria-current="page">TOP 20</a><a href="classifica.html">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a></nav>
 </body>
 </html>
