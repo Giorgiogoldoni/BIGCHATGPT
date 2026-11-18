@@ -10,6 +10,12 @@ header,.bar,.wrap,.note{padding:12px 18px}header{padding-bottom:0}h1{margin:0;fo
 td.n{text-align:right}.neg{color:#c0392b}.pos{color:#1e8449}a{color:#1d4ed8;text-decoration:none}a:hover{text-decoration:underline}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
 .tag{font-size:11px;border-radius:4px;padding:1px 5px;margin-left:5px;background:#eee;color:#555}.ok{background:#e8f5e9;color:#1e8449}.nv{background:#fff3e0;color:#b45309}.note{font-size:12px;color:#555;max-width:1100px}
 tr.r{cursor:pointer}tr.dt td{background:#fafbfc;padding:8px 18px}.sm th{cursor:default;position:static}
+
+/* Navigazione inferiore condivisa */
+body{padding-bottom:76px!important}
+.big-nav{position:fixed;z-index:9999;left:0;right:0;bottom:0;display:flex;gap:4px;align-items:center;justify-content:flex-start;overflow-x:auto;white-space:nowrap;padding:7px max(8px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #d8dee8;box-shadow:0 -3px 12px rgba(16,24,40,.08);-webkit-overflow-scrolling:touch}
+.big-nav a{flex:0 0 auto;display:inline-block;padding:9px 12px;border-radius:8px;color:#344054!important;text-decoration:none!important;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,sans-serif}
+.big-nav a.active{background:#e8eefc;color:#174ea6!important}
 </style></head><body>
 <header><h1>big – classifica dei sistemi per ETF</h1><div class="sub" id="sub">Caricamento…</div></header>
 <div class="bar">
@@ -58,4 +64,6 @@ $("tb").onclick=e=>{if(e.target.tagName=="A")return;const tr=e.target.closest("t
 $("xls").onclick=()=>{const O=$("ori").value;const out=RR.map(x=>{const o={Ticker:x.t,Nome:x.n,Emittente:x.e,["Miglior sistema +"+O]:x.m[0]?S.find(z=>z.id==x.m[0]).nome:"",Esito:ES[x.m[1]],"Storia (anni)":+x.yrs.toFixed(1)};
  S.forEach(s=>{const v=x.r.st[O]&&x.r.st[O][s.id];o[s.nome+" segnali"]=v?v[0]:"";o[s.nome+" % positivi"]=v?v[1]:"";o[s.nome+" mediana %"]=v?v[2]:"";o[s.nome+" eccesso %"]=v?v[3]:"";o[s.nome+" ecc. 1a meta %"]=v&&v[4]!=null?v[4]:"";o[s.nome+" ecc. 2a meta %"]=v&&v[5]!=null?v[5]:"";o[s.nome+" t"]=v&&v[8]!=null?v[8]:""});return o});
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(out),"Classifica +"+O);XLSX.writeFile(wb,"big_classifica_"+O+".xlsx")};
-</script></body></html>
+</script>
+<nav class="big-nav" aria-label="Navigazione principale BIGCHATGPT"><a href="index.html">BIG</a><a href="top20.html">TOP 20</a><a href="classifica.html" class="active" aria-current="page">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a></nav>
+</body></html>
