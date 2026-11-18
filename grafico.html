@@ -8,7 +8,7 @@ body{margin:0;background:#fff;color:#1a1a1a;font:14px/1.4 system-ui,-apple-syste
 h1{margin:0;font-size:20px}.sub{color:#666;font-size:12px}.px{font-size:22px;font-weight:600}.neg{color:#c0392b}.pos{color:#1e8449}
 button,a.b{font:inherit;padding:6px 10px;border:1px solid #c9ccd1;border-radius:6px;background:#fff;cursor:pointer;color:#1a1a1a;text-decoration:none}button:hover,a.b:hover{background:#f3f4f6}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}#ch{height:460px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
-label{display:flex;gap:4px;align-items:center;font-size:13px;margin-right:8px}table{border-collapse:collapse;width:100%}th,td{padding:5px 8px;border-bottom:1px solid #eceef1;text-align:left;white-space:nowrap}th{border-bottom:2px solid #d5d8dd}.w{overflow-x:auto}
+label{display:flex;gap:6px;align-items:center;font-size:13px;margin-right:8px;padding:5px 7px;border:1px solid #e1e5eb;border-radius:7px}label input{width:16px;height:16px}#ch{width:100%;min-height:360px}table{border-collapse:collapse;width:100%}th,td{padding:5px 8px;border-bottom:1px solid #eceef1;text-align:left;white-space:nowrap}th{border-bottom:2px solid #d5d8dd}.w{overflow-x:auto}
 
 /* Navigazione inferiore condivisa */
 body{padding-bottom:76px!important}
@@ -20,7 +20,7 @@ body{padding-bottom:76px!important}
 <div class="p" style="padding-top:0"><h1 id="nome">Caricamento…</h1><div class="sub" id="meta"></div><div><span class="px" id="px"></span> <span id="var"></span></div></div>
 <div class="p row" id="sis"></div>
 <div class="p row" style="padding-top:0"><button id="arrows">Nascondi tutte le frecce</button><span class="sub">Mostra o nasconde insieme tutti i segnali sul grafico</span></div>
-<div class="p row" style="padding-top:0"><label><input type="checkbox" id="kama" checked><i class="dot" style="background:#f59e0b"></i>KAMA core (10, 2, 30)</label><label><input type="checkbox" id="don" checked><i class="dot" style="background:#64748b"></i>Canale di Donchian (20 barre)</label><label><input type="checkbox" id="cloud"><i class="dot" style="background:#22c55e"></i>KAMA Cloud (nuvola, solo grafico)</label></div>
+<div class="p" style="padding-top:0"><div class="sub" style="margin-bottom:5px;font-weight:600">INDICATORI (disattivati all’apertura)</div><div class="row"><label><input type="checkbox" id="kama"><i class="dot" style="background:#f59e0b"></i>KAMA core (10, 2, 30)</label><label><input type="checkbox" id="don"><i class="dot" style="background:#64748b"></i>Canale di Donchian (20 barre)</label><label><input type="checkbox" id="cloud"><i class="dot" style="background:#22c55e"></i>KAMA Cloud (nuvola, solo grafico)</label></div></div>
 <div class="p" style="padding-top:0"><div id="ch"></div></div>
 <div class="p row"><button id="xls">Scarica Excel</button><a class="b" href="data/regole_big.pdf" target="_blank">Regole PDF</a><a class="b" id="tv" target="_blank">TradingView</a></div>
 <div class="p w"><h3 style="margin:0 0 6px">Posizioni e guadagno</h3><table><thead><tr><th>Sistema</th><th>Ingresso</th><th>Prezzo</th><th>Uscita</th><th>Prezzo</th><th>Motivo</th><th>Guadagno</th><th>Stato</th></tr></thead><tbody id="tr"></tbody></table><p class="sub">Guadagno lordo, senza commissioni: da ingresso a uscita, o all’ultima chiusura se la posizione è aperta. Non è un backtest.</p><h3 style="margin:14px 0 6px">Segnali di acquisto</h3><table><thead><tr><th>Data</th><th>Sistema</th><th>Prezzo</th><th>Note</th><th>Giorni fa</th></tr></thead><tbody id="ev"></tbody></table></div>
@@ -38,7 +38,7 @@ Promise.all([fetch("data/index.json").then(r=>r.json()),fetch("data/charts/"+T.r
  const ch=LightweightCharts.createChart($("ch"),{layout:{background:{color:"#fff"},textColor:"#333"},grid:{vertLines:{color:"#f0f1f3"},horzLines:{color:"#f0f1f3"}},rightPriceScale:{borderColor:"#d5d8dd"},timeScale:{borderColor:"#d5d8dd"}});
  series=ch.addCandlestickSeries({upColor:"#1e8449",downColor:"#c0392b",borderVisible:false,wickUpColor:"#1e8449",wickDownColor:"#c0392b"});
  series.setData(heikinAshi(c.d));
- const ln=(color,dash)=>ch.addLineSeries({color,lineWidth:1,lineStyle:dash||0,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
+ const ln=(color,dash)=>ch.addLineSeries({color,lineWidth:1,lineStyle:dash||0,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false,visible:false});
  const pts=a=>a.map((v,i)=>v==null?null:{time:c.d[i][0],value:v}).filter(Boolean);
  const hi=c.d.map(r=>r[2]),lo=c.d.map(r=>r[3]),dn=donch(hi,lo,20);
  const kS=ln("#f59e0b"),uS=ln("#64748b"),lS=ln("#64748b"),mS=ln("#94a3b8",2);
