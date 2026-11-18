@@ -9,6 +9,12 @@ h1{margin:0;font-size:20px}.sub{color:#666;font-size:12px}.px{font-size:22px;fon
 button,a.b{font:inherit;padding:6px 10px;border:1px solid #c9ccd1;border-radius:6px;background:#fff;cursor:pointer;color:#1a1a1a;text-decoration:none}button:hover,a.b:hover{background:#f3f4f6}
 .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}#ch{height:460px}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
 label{display:flex;gap:4px;align-items:center;font-size:13px;margin-right:8px}table{border-collapse:collapse;width:100%}th,td{padding:5px 8px;border-bottom:1px solid #eceef1;text-align:left;white-space:nowrap}th{border-bottom:2px solid #d5d8dd}.w{overflow-x:auto}
+
+/* Navigazione inferiore condivisa */
+body{padding-bottom:76px!important}
+.big-nav{position:fixed;z-index:9999;left:0;right:0;bottom:0;display:flex;gap:4px;align-items:center;justify-content:flex-start;overflow-x:auto;white-space:nowrap;padding:7px max(8px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #d8dee8;box-shadow:0 -3px 12px rgba(16,24,40,.08);-webkit-overflow-scrolling:touch}
+.big-nav a{flex:0 0 auto;display:inline-block;padding:9px 12px;border-radius:8px;color:#344054!important;text-decoration:none!important;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,sans-serif}
+.big-nav a.active{background:#e8eefc;color:#174ea6!important}
 </style></head><body>
 <div class="p"><a class="b" href="index.html">← Elenco</a></div>
 <div class="p" style="padding-top:0"><h1 id="nome">Caricamento…</h1><div class="sub" id="meta"></div><div><span class="px" id="px"></span> <span id="var"></span></div></div>
@@ -74,4 +80,6 @@ $("xls").onclick=()=>{const wb=XLSX.utils.book_new();
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(C.ev.map(e=>({Data:e[0],Sistema:nm(e[1]),Segnale:e[2],Prezzo:e[3],Note:e[4]}))),"Segnali");
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet((C.tr||[]).map(t=>({Sistema:nm(t[0]),Ingresso:t[1],"Prezzo ingresso":t[2],Uscita:t[3]||"","Prezzo uscita":t[4]||"",Motivo:t[5]||"","Guadagno %":t[6],Stato:t[3]?"Chiusa":"Aperta"}))),"Posizioni");
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(C.d.map(r=>({Data:r[0],Apertura:r[1],Massimo:r[2],Minimo:r[3],Chiusura:r[4]}))),"Prezzi");XLSX.writeFile(wb,"big_"+C.t+".xlsx")};
-</script></body></html>
+</script>
+<nav class="big-nav" aria-label="Navigazione principale BIGCHATGPT"><a href="index.html">BIG</a><a href="top20.html">TOP 20</a><a href="classifica.html">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a></nav>
+</body></html>
