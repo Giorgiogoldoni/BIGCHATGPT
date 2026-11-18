@@ -19,6 +19,7 @@ body{padding-bottom:76px!important}
 <div class="p"><a class="b" href="index.html">← Elenco</a></div>
 <div class="p" style="padding-top:0"><h1 id="nome">Caricamento…</h1><div class="sub" id="meta"></div><div><span class="px" id="px"></span> <span id="var"></span></div></div>
 <div class="p row" id="sis"></div>
+<div class="p row" style="padding-top:0"><button id="arrows">Nascondi tutte le frecce</button><span class="sub">Mostra o nasconde insieme tutti i segnali sul grafico</span></div>
 <div class="p row" style="padding-top:0"><label><input type="checkbox" id="kama" checked><i class="dot" style="background:#f59e0b"></i>KAMA core (10, 2, 30)</label><label><input type="checkbox" id="don" checked><i class="dot" style="background:#64748b"></i>Canale di Donchian (20 barre)</label><label><input type="checkbox" id="cloud"><i class="dot" style="background:#22c55e"></i>KAMA Cloud (nuvola, solo grafico)</label></div>
 <div class="p" style="padding-top:0"><div id="ch"></div></div>
 <div class="p row"><button id="xls">Scarica Excel</button><a class="b" href="data/regole_big.pdf" target="_blank">Regole PDF</a><a class="b" id="tv" target="_blank">TradingView</a></div>
@@ -26,7 +27,7 @@ body{padding-bottom:76px!important}
 <script>
 const $=id=>document.getElementById(id),T=new URLSearchParams(location.search).get("t")||"";
 const TV={".MI":"MIL:",".DE":"XETR:",".PA":"EURONEXT:",".L":"LSE:"},fix=s=>s.replace(/'/g,"’");
-let C,S,on={},series,markers;
+let C,S,on={},series,markers,showArrows=true;
 Promise.all([fetch("data/index.json").then(r=>r.json()),fetch("data/charts/"+T.replace(".","_")+".json").then(r=>r.json())]).then(([ix,c])=>{
  C=c;S=ix.sistemi;S.forEach(s=>on[s.id]=true);
  $("nome").textContent=fix(c.n)+" ("+c.t+")";$("meta").textContent=c.b+" · ISIN "+c.i+" · ultima barra "+c.u+" · dati generati "+c.gen;
@@ -36,7 +37,7 @@ Promise.all([fetch("data/index.json").then(r=>r.json()),fetch("data/charts/"+T.r
  $("sis").onchange=e=>{on[e.target.dataset.id]=e.target.checked;mark();list()};
  const ch=LightweightCharts.createChart($("ch"),{layout:{background:{color:"#fff"},textColor:"#333"},grid:{vertLines:{color:"#f0f1f3"},horzLines:{color:"#f0f1f3"}},rightPriceScale:{borderColor:"#d5d8dd"},timeScale:{borderColor:"#d5d8dd"}});
  series=ch.addCandlestickSeries({upColor:"#1e8449",downColor:"#c0392b",borderVisible:false,wickUpColor:"#1e8449",wickDownColor:"#c0392b"});
- series.setData(c.d.map(r=>({time:r[0],open:r[1],high:r[2],low:r[3],close:r[4]})));
+ series.setData(heikinAshi(c.d));
  const ln=(color,dash)=>ch.addLineSeries({color,lineWidth:1,lineStyle:dash||0,priceLineVisible:false,lastValueVisible:false,crosshairMarkerVisible:false});
  const pts=a=>a.map((v,i)=>v==null?null:{time:c.d[i][0],value:v}).filter(Boolean);
  const hi=c.d.map(r=>r[2]),lo=c.d.map(r=>r[3]),dn=donch(hi,lo,20);
@@ -50,8 +51,10 @@ Promise.all([fetch("data/index.json").then(r=>r.json()),fetch("data/charts/"+T.r
  try{series.attachPrimitive(bA);series.attachPrimitive(bB)}catch(e){}
  $("cloud").onchange=()=>{const v=$("cloud").checked;[c1,c2,c3].forEach(x=>x.applyOptions({visible:v}));bA.setVisible(v);bB.setVisible(v)};
  ch.timeScale().fitContent();
+ $("arrows").onclick=()=>{showArrows=!showArrows;$("arrows").textContent=showArrows?"Nascondi tutte le frecce":"Mostra tutte le frecce";mark()};
  new ResizeObserver(()=>ch.applyOptions({width:$("ch").clientWidth})).observe($("ch"));mark();list()
 }).catch(()=>$("nome").textContent="Dati non trovati per "+T);
+function heikinAshi(rows){let prevO=null,prevC=null;return rows.map(r=>{const [time,o,h,l,c]=r,close=(o+h+l+c)/4,open=prevO==null?(o+c)/2:(prevO+prevC)/2,high=Math.max(h,open,close),low=Math.min(l,open,close);prevO=open;prevC=close;return{time,open,high,low,close}})}
 function kama(c,n=10,f=2,s=30){const fs=2/(f+1),ss=2/(s+1),o=new Array(c.length).fill(null);if(c.length<=n)return o;o[n]=c[n];
  for(let i=n+1;i<c.length;i++){const d=Math.abs(c[i]-c[i-n]);let v=0;for(let j=i-n+1;j<=i;j++)v+=Math.abs(c[j]-c[j-1]);const er=v?d/v:0,sc=(er*(fs-ss)+ss)**2;o[i]=o[i-1]+sc*(c[i]-o[i-1])}return o}
 function donch(h,l,n){const u=new Array(h.length).fill(null),d=new Array(h.length).fill(null);
@@ -70,7 +73,7 @@ function cloudBand(chart,ser,tm,up,lo,col){let req=null,vis=false;
    q={x:X,u:U,l:L}}})}catch(e){}}},view={zOrder:()=>"bottom",renderer:()=>rend};
  return{attached(p){req=p.requestUpdate},detached(){req=null},paneViews:()=>[view],updateAllViews(){},setVisible(v){vis=v;if(req)req()}}}
 const col=id=>S.find(s=>s.id==id).colore,nm=id=>S.find(s=>s.id==id).nome;
-function mark(){const m=C.ev.filter(e=>on[e[1]]).map(e=>({time:e[0],position:"belowBar",shape:"arrowUp",color:col(e[1]),text:e[2]}));
+function mark(){if(!showArrows){series.setMarkers([]);return}const m=C.ev.filter(e=>on[e[1]]).map(e=>({time:e[0],position:"belowBar",shape:"arrowUp",color:col(e[1]),text:e[2]}));
  (C.tr||[]).filter(t=>on[t[0]]&&t[3]).forEach(t=>m.push({time:t[3],position:"aboveBar",shape:"arrowDown",color:col(t[0]),text:"Esci"}));
  m.sort((a,b)=>a.time<b.time?-1:a.time>b.time?1:0);series.setMarkers(m)}
 const gn=v=>(v>=0?"+":"")+v.toFixed(2)+"%";
