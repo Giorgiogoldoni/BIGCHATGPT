@@ -8,6 +8,8 @@ on:
       - "scripts/test_benchmark.py"
       - "scripts/entry_exit_research.py"
       - "scripts/test_entry_exit_research.py"
+      - "scripts/mr_smr_watchlist.py"
+      - "scripts/test_mr_smr_watchlist.py"
       - ".github/workflows/benchmark-tests.yml"
 permissions:
   contents: read
@@ -21,6 +23,6 @@ jobs:
           python-version: "3.11"
       - name: Dipendenze
         run: pip install pandas numpy
-      - name: Test benchmark e ricerca entry/exit
-        run: python -m unittest test_benchmark.py test_entry_exit_research.py -v
+      - name: Test benchmark, ricerca entry/exit e watchlist MR/SMR
+        run: python -m unittest test_benchmark.py test_entry_exit_research.py test_mr_smr_watchlist.py -v
         working-directory: scripts
