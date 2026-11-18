@@ -12,6 +12,12 @@ th{position:sticky;top:0;background:#fff;cursor:pointer;font-weight:600;border-b
 a{color:#1d4ed8;text-decoration:none}a:hover{text-decoration:underline}.dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px}
 .tag{font-size:11px;border-radius:4px;padding:1px 5px;margin-left:5px}.new{background:#e8f5e9;color:#1e8449}.lev{background:#fff3e0;color:#b45309}.inv{background:#fde8e8;color:#b42318}
 .leg{display:flex;flex-wrap:wrap;gap:12px;padding:0 18px;font-size:12px;color:#555}.conf{font-weight:600}.f{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:2px;background:#d5d8dd}.f.on{background:#1d4ed8}
+
+/* Navigazione inferiore condivisa */
+body{padding-bottom:76px!important}
+.big-nav{position:fixed;z-index:9999;left:0;right:0;bottom:0;display:flex;gap:4px;align-items:center;justify-content:flex-start;overflow-x:auto;white-space:nowrap;padding:7px max(8px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom));background:#fff;border-top:1px solid #d8dee8;box-shadow:0 -3px 12px rgba(16,24,40,.08);-webkit-overflow-scrolling:touch}
+.big-nav a{flex:0 0 auto;display:inline-block;padding:9px 12px;border-radius:8px;color:#344054!important;text-decoration:none!important;font:600 12px/1.2 system-ui,-apple-system,Segoe UI,sans-serif}
+.big-nav a.active{background:#e8eefc;color:#174ea6!important}
 </style></head><body>
 <header><h1>big – segnali di acquisto sugli ETF</h1><div class="sub" id="sub">Caricamento…</div></header>
 <div class="bar">
@@ -73,4 +79,6 @@ $("xls").onclick=()=>{const R=rows().map(r=>{const o={Ticker:r.t,Nome:r.n,ISIN:r
  ["Confluenza ("+$("fin").value+"gg)"]:r.conf,"Stato Trend":r.sta?r.sta[0]:"","Guadagno Trend %":r.sta&&r.sta[1]!=null?r.sta[1]:"","Core ora":r.core||"","Acq. nuovo":r.nuovo?"Sì":"",["Miglior sistema +"+$("ori").value]:(r.mg&&r.mg[0]?D.sistemi.find(q=>q.id==r.mg[0]).nome:""),"Esito classifica":r.mg?ESITO[r.mg[1]]:""};
  FAM.forEach((f,i)=>o["Famiglia "+f[0]]=r.fam[i]?"Sì":"");D.sistemi.forEach(s=>{o["Ultimo segnale "+s.nome]=r.s[s.id]||"";const x=r.x&&r.x[s.id];o["Guadagno % "+s.nome]=x?x[1]:"";o["Stato "+s.nome]=x?(x[2]?"Chiusa "+x[2]:"Aperta"):""});return o});
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(R),"big");XLSX.writeFile(wb,"big_segnali.xlsx")};
-</script></body></html>
+</script>
+<nav class="big-nav" aria-label="Navigazione principale BIGCHATGPT"><a href="index.html" class="active" aria-current="page">BIG</a><a href="top20.html">TOP 20</a><a href="classifica.html">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a></nav>
+</body></html>
