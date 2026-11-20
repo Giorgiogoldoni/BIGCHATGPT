@@ -131,7 +131,8 @@ def build():
     areas = [area_view(name, cfg, by_ticker) for name, cfg in AREAS.items()]
     global_rows = [compact_row(by_ticker[t]) for t in GLOBAL if t in by_ticker]
     factor_rows = [compact_row(by_ticker[t]) for t in FACTORS if t in by_ticker]
-    all_geo = list(by_ticker.values())
+    area_tickers = {ticker for cfg in AREAS.values() for ticker in cfg["tickers"]}
+    all_geo = [by_ticker[t] for t in area_tickers if t in by_ticker]
     trend_counts = {s: sum(r.get("trend") == s for r in all_geo) for s in ("VERDE", "GRIGIO", "ROSSO")}
     vix = num(geo.get("vix"))
     vix_regime = geo.get("vix_regime", "n.d.")
