@@ -58,5 +58,5 @@ $("xls").onclick=()=>{if(!D)return;const wb=XLSX.utils.book_new(),ser=g=>D.grupp
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ser("azionari")),"Azionari");XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(ser("obbligazionari")),"Obbligazionari");
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(D.classi.map(c=>({Ticker:c[0],Nome:c[1],Classe:c[2],Motivo:c[3],"Da controllare":c[4]?"Sì":"No"}))),"Classificazione");XLSX.writeFile(wb,"big_mercato_iShares.xlsx")};
 </script>
-<nav class="big-nav" aria-label="Navigazione principale BIGCHATGPT"><a href="index.html">BIG</a><a href="top20.html">TOP 20</a><a href="classifica.html">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html" class="active" aria-current="page">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a></nav>
+<nav class="big-nav" aria-label="Navigazione principale BIGCHATGPT"><a href="index.html">BIG</a><a href="top20.html">TOP 20</a><a href="bollettino.html">Bollettino</a><a href="classifica.html">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html" class="active" aria-current="page">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a></nav>
 </body></html>
