@@ -43,7 +43,7 @@ jobs:
       - name: Dipendenze
         run: pip install pandas numpy yfinance reportlab openpyxl
       - name: Test causalita' e benchmark sistemi
-        run: python -m unittest test_causality.py test_score.py test_benchmark.py test_reversion_audit.py -v
+        run: python -m unittest test_causality.py test_score.py test_benchmark.py test_reversion_audit.py test_bollettino.py -v
         working-directory: scripts
       - name: Scarica dati e calcola segnali
         run: python build.py
