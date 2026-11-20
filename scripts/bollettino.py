@@ -189,7 +189,7 @@ def build():
         "big": {"generated": big.get("gen"), "universe": len(big_rows),
                 "recent_signals": recent_signals[:12]},
         "top20": {"generated": score.get("generated"), "period": score.get("period"),
-                  "rows": [{k: r.get(k) for k in ("t", "name", "score", "score20", "score40", "score60", "roc20", "roc40", "roc60", "rsi14", "adx14", "atr_pct", "date", "coverage")} for r in score_rows[:10]]},
+                  "rows": [{k: r.get(k) for k in ("t", "name", "score", "score20", "score40", "score60", "roc20", "roc40", "roc60", "rsi14", "adx14", "atr_pct", "date", "coverage")} for r in score_rows[:20]]},
         "mean_reversion": {"generated": audit.get("generated"), "mr": mr, "smr": smr},
         "method": {
             "geography": "RAPTOR GEOGRAFIA: KAMA, Kaufman ER, Awesome Oscillator, SAR, Vortex, RVI, RSI, ADX, performance 7/30 sedute e stress flags.",
