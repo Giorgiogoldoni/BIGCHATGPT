@@ -65,5 +65,5 @@ $("xls").onclick=()=>{const O=$("ori").value;const out=RR.map(x=>{const o={Ticke
  S.forEach(s=>{const v=x.r.st[O]&&x.r.st[O][s.id];o[s.nome+" segnali"]=v?v[0]:"";o[s.nome+" % positivi"]=v?v[1]:"";o[s.nome+" mediana %"]=v?v[2]:"";o[s.nome+" eccesso %"]=v?v[3]:"";o[s.nome+" ecc. 1a meta %"]=v&&v[4]!=null?v[4]:"";o[s.nome+" ecc. 2a meta %"]=v&&v[5]!=null?v[5]:"";o[s.nome+" t"]=v&&v[8]!=null?v[8]:""});return o});
  const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(out),"Classifica +"+O);XLSX.writeFile(wb,"big_classifica_"+O+".xlsx")};
 </script>
-<nav class="big-nav" aria-label="Navigazione principale BIGCHATGPT"><a href="index.html">BIG</a><a href="top20.html">TOP 20</a><a href="classifica.html" class="active" aria-current="page">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a></nav>
+<nav class="big-nav" aria-label="Navigazione principale BIGCHATGPT"><a href="index.html">BIG</a><a href="top20.html">TOP 20</a><a href="bollettino.html">Bollettino</a><a href="classifica.html" class="active" aria-current="page">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a></nav>
 </body></html>
