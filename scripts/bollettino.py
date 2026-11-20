@@ -3,6 +3,7 @@ import json
 import datetime as dt
 import urllib.request
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 ROOT = Path(__file__).resolve().parent.parent
 DATA = ROOT / "data"
@@ -168,7 +169,7 @@ def build():
         target["open"] += sum(t.get("status") == "open" for t in trades)
         target["closed"] += sum(t.get("status") == "closed" for t in trades)
 
-    today = dt.datetime.now(dt.timezone.utc).astimezone(dt.timezone(dt.timedelta(hours=1))).date().isoformat()
+    today = dt.datetime.now(ZoneInfo("Europe/Rome")).date().isoformat()
     generated = dt.datetime.now(dt.timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
     summary = (
         f"Il quadro geografico registra {trend_counts['VERDE']} strumenti in trend verde, "
