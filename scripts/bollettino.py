@@ -68,7 +68,9 @@ def compact_row(row):
         "trend": row.get("trend"), "trend_rs": row.get("trend_rs"),
         "buy_level": row.get("buy_level"), "perf7": num(row.get("perf7")),
         "perf30": num(row.get("perf30")), "rsi": num(row.get("rsi")),
-        "adx": num(row.get("adx")), "k_pct": num(row.get("k_pct")),
+        "adx": num(row.get("adx")), "k_pct": num(row.get("k_pct")), "er": num(row.get("er")),
+        "ao": num(row.get("ao")), "sar_bullish": bool(row.get("sar_bullish")),
+        "vortex_bullish": bool(row.get("vortex_bullish")), "rvi_bullish": bool(row.get("rvi_bullish")),
         "stress_score": num(row.get("stress_score")),
         "stress_flags": row.get("stress_flags") or [],
         "mm_aligned": bool(row.get("mm_aligned")),
@@ -81,17 +83,17 @@ def area_view(name, cfg, by_ticker):
     rows.sort(key=lambda r: (num(r.get("score")) if num(r.get("score")) is not None else -999), reverse=True)
     green = sum(r.get("trend") == "VERDE" for r in rows)
     red = sum(r.get("trend") == "ROSSO" for r in rows)
-    buy = [r for r in rows if r.get("buy_level") == "BUY" and r.get("trend") == "VERDE" and r.get("stress_score", 9) <= 1]
+    buy = [r for r in rows if r.get("buy_level") == "BUY" and r.get("trend") == "VERDE" and r.get("trend_rs") == "VERDE" and r.get("mm_aligned") and r.get("sar_bullish") and r.get("vortex_bullish") and r.get("rvi_bullish") and num(r.get("stress_score")) is not None and num(r.get("stress_score")) <= 1]
     watch = [r for r in rows if r.get("buy_level") == "WATCH"]
     if buy:
         stance = "SEGNALI POSITIVI"
         reason = "Almeno uno strumento combina BUY, trend verde e stress contenuto."
-    elif watch:
-        stance = "OSSERVARE"
-        reason = "Sono presenti strumenti in WATCH, ma manca una conferma piena per un segnale operativo."
     elif rows and red / len(rows) >= 0.5:
         stance = "DIFESA"
         reason = "Prevalgono trend rossi: evitare anticipazioni e attendere stabilizzazione."
+    elif watch:
+        stance = "OSSERVARE"
+        reason = "Sono presenti strumenti in WATCH, ma manca una conferma piena per un segnale operativo."
     else:
         stance = "ATTENDERE"
         reason = "Non emerge una confluenza sufficiente di segnali positivi."
@@ -193,7 +195,7 @@ def build():
             "geography": "RAPTOR GEOGRAFIA: KAMA, Kaufman ER, Awesome Oscillator, SAR, Vortex, RVI, RSI, ADX, performance 7/30 sedute e stress flags.",
             "big": "BIGCHATGPT: segnali dei sistemi Trend, Momentum, Indicatori, Inversione e Breakout.",
             "top20": "Score tecnico 0–100 sui tre orizzonti 20/40/60 sedute; non è una previsione di rendimento.",
-            "decision": "Le etichette sono filtri tecnici descrittivi. BUY richiede contemporaneamente livello BUY, trend VERDE e stress score ≤1; WATCH non equivale a comprare.",
+            "decision": "Le etichette sono filtri tecnici descrittivi. BUY richiede livello BUY, trend e forza relativa VERDE, medie allineate, SAR/Vortex/RVI rialzisti e stress score ≤1; WATCH non equivale a comprare.",
         },
     }
     (DATA / "bollettino.json").write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
