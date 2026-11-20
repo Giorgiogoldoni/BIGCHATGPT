@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>BIGCHATGPT · Bollettino quotidiano</title>
+<style>
+*{box-sizing:border-box}body{margin:0;padding:0 0 78px;background:#f5f7fa;color:#172033;font:14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+header,main{max-width:1450px;margin:auto;padding:16px}header{padding-bottom:8px}h1{font-size:25px;margin:0}h2{font-size:17px;margin:0 0 10px}h3{font-size:14px;margin:0 0 7px}.sub,.muted{color:#667085}.sub{font-size:12px}
+.topline{display:flex;gap:12px;align-items:center;justify-content:space-between;flex-wrap:wrap}.controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+select,button{font:inherit;padding:8px 10px;border:1px solid #cbd2d9;border-radius:8px;background:white;color:inherit}
+button{cursor:pointer}.panel,.area,.stat{background:#fff;border:1px solid #e4e7ec;border-radius:11px;padding:13px}
+.panel{margin:12px 0}.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:9px;margin:12px 0}
+.stat b{display:block;font-size:22px;font-variant-numeric:tabular-nums}.stat span{font-size:12px;color:#667085}
+.risk{border-left:4px solid #c58a21}.risk strong{display:block;margin-bottom:3px}
+.areas{display:grid;grid-template-columns:repeat(auto-fit,minmax(310px,1fr));gap:10px;margin:12px 0}
+.area-head{display:flex;justify-content:space-between;gap:8px;align-items:center}.weight{font-size:11px;color:#667085;background:#f0f2f5;border-radius:5px;padding:3px 6px}
+.stance{font-size:11px;font-weight:700;border-radius:5px;padding:3px 6px;background:#eef2f6;color:#475467}.stance.good{background:#e8f5e9;color:#167344}.stance.warn{background:#fff2d8;color:#925d00}.stance.bad{background:#fde8e8;color:#b42318}
+.metrics{display:flex;flex-wrap:wrap;gap:12px;margin:8px 0;color:#475467;font-size:12px}
+.scroll{overflow:auto}table{border-collapse:collapse;width:100%;min-width:650px}th,td{padding:7px 8px;border-bottom:1px solid #edf0f3;text-align:left;white-space:nowrap;font-size:12px}th{color:#667085;font-weight:600;background:#fafbfc}.num{text-align:right;font-variant-numeric:tabular-nums}.pos{color:#16804a}.neg{color:#b42318}
+.sections{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:10px}.tag{display:inline-block;border-radius:5px;background:#f0f2f5;padding:2px 6px;font-size:11px;color:#475467}
+ul.compact{margin:7px 0 0;padding-left:18px}ul.compact li{margin:4px 0}.foot{font-size:11px;color:#667085;margin-top:15px}
+.empty{padding:20px;text-align:center;color:#667085}.bottom{position:fixed;z-index:20;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #dfe3e8;display:flex;gap:4px;overflow-x:auto;white-space:nowrap;padding:7px max(8px,env(safe-area-inset-left)) calc(7px + env(safe-area-inset-bottom))}
+.bottom a{flex:0 0 auto;text-decoration:none;color:#344054;font-size:12px;font-weight:600;padding:9px 11px;border-radius:8px}.bottom a.active{background:#e8eefc;color:#174ea6}
+@media(max-width:600px){header,main{padding:11px}h1{font-size:21px}.areas{grid-template-columns:1fr}.sections{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+ <div class="topline"><div><h1>BIGCHATGPT · Bollettino</h1><div class="sub" id="meta">Caricamento dell'edizione quotidiana…</div></div>
+ <div class="controls"><label for="archive" class="sub">Archivio</label><select id="archive"><option value="">Ultima edizione</option></select><button id="reload">Aggiorna</button></div></div>
+</header>
+<main>
+ <div class="panel risk" id="risk"><strong>Regime di mercato</strong><span>Caricamento…</span></div>
+ <div class="stats" id="stats"></div>
+ <section class="panel"><h2>Editoriale del giorno</h2><div id="summary">Lettura dei dati in corso…</div><div class="sub" id="source" style="margin-top:7px"></div></section>
+ <h2>Rotazione geografica</h2>
+ <div class="sub">Budget azionario di riferimento: 60% ripartito tra le sei aree; il restante 40% resta nella componente difensiva definita dalla strategia. Pesi-obiettivo azionari: Nord America 15%, Europa 12%, Asia-Pacifico 15%, America Latina 10%, Medio Oriente 4%, Africa 4%.</div>
+ <div class="areas" id="areas"><div class="empty">In attesa dei dati geografici…</div></div>
+ <div class="sections">
+  <section class="panel"><h2>Global</h2><div class="sub">Esposizioni globali, fuori dalle classifiche delle singole aree.</div><div id="global"></div></section>
+  <section class="panel"><h2>Fattori e stili</h2><div class="sub">Equal Weight, Quality, Minimum Volatility, Efficient Core e Dividend: monitorati separatamente dalla geografia.</div><div id="factors"></div></section>
+ </div>
+ <div class="sections">
+  <section class="panel"><h2>BIGCHATGPT · TOP 20</h2><div class="sub" id="topmeta"></div><div id="top20"></div></section>
+  <section class="panel"><h2>Segnali recenti BIG</h2><div class="sub">Ultime date di segnale registrate dal motore BIG.</div><div id="signals"></div></section>
+ </div>
+ <section class="panel"><h2>Audit MR / SMR</h2><div class="sub" id="auditmeta"></div><div class="stats" id="audit"></div></section>
+ <section class="panel"><h2>Metodo e regole di lettura</h2><div id="method"></div></section>
+ <div class="foot">Bollettino tecnico e informativo, non consulenza finanziaria né ordine operativo. Le etichette sono generate da regole quantitative esplicite; verificare liquidità, spread, valuta, costi e documentazione dello strumento prima di ogni operazione. Dati geografici e motori possono avere orari di aggiornamento differenti.</div>
+</main>
+<nav class="bottom" aria-label="Navigazione principale BIGCHATGPT">
+<a href="index.html">BIG</a><a href="bollettino.html" class="active" aria-current="page">Bollettino</a><a href="top20.html">TOP 20</a><a href="classifica.html">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a>
+</nav>
+<script>
+const $=id=>document.getElementById(id);let latest=null,history=[];
+const esc=v=>String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=(v,d=1)=>v==null||v===""?"—":Number(v).toFixed(d).replace(".",",");
+const pct=v=>v==null?"—":(v>0?"+":"")+fmt(v,2)+"%";
+const cls=v=>v==null?"":v<0?"neg":"pos";
+const stanceClass=s=>s==="SEGNALI POSITIVI"?"good":s==="DIFESA"?"bad":"warn";
+function table(rows,mode="geo"){
+ if(!rows||!rows.length)return '<div class="empty">Nessun dato disponibile per questa sezione.</div>';
+ if(mode==="top")return '<div class="scroll"><table><thead><tr><th>#</th><th>Ticker</th><th>Score</th><th>+20</th><th>+40</th><th>+60</th><th>ROC 20</th><th>RSI</th><th>ADX</th></tr></thead><tbody>'+rows.map((r,i)=>'<tr><td>'+(i+1)+'</td><td><b>'+esc(r.t)+'</b></td><td class="num"><b>'+fmt(r.score)+'</b></td><td class="num">'+fmt(r.score20)+'</td><td class="num">'+fmt(r.score40)+'</td><td class="num">'+fmt(r.score60)+'</td><td class="num '+cls(r.roc20)+'">'+pct(r.roc20)+'</td><td class="num">'+fmt(r.rsi14)+'</td><td class="num">'+fmt(r.adx14)+'</td></tr>').join("")+'</tbody></table></div>';
+ return '<div class="scroll"><table><thead><tr><th>Ticker</th><th>Trend</th><th>Livello</th><th>Score</th><th>7 sed.</th><th>30 sed.</th><th>RSI</th><th>Stress</th></tr></thead><tbody>'+rows.map(r=>'<tr><td><b>'+esc(r.ticker)+'</b><div class="sub">'+esc(r.name)+'</div></td><td>'+esc(r.trend||"—")+'</td><td>'+esc(r.buy_level||"—")+'</td><td class="num">'+fmt(r.score)+'</td><td class="num '+cls(r.perf7)+'">'+pct(r.perf7)+'</td><td class="num '+cls(r.perf30)+'">'+pct(r.perf30)+'</td><td class="num">'+fmt(r.rsi)+'</td><td class="num">'+fmt(r.stress_score,0)+'</td></tr>').join("")+'</tbody></table></div>';
+}
+function render(d){
+ if(!d){$("summary").textContent="Edizione non disponibile.";return}
+ $("meta").textContent="Edizione "+d.date+" · dati generati "+(d.generated||"n.d.")+" · fonte geografica: "+(d.geo_source||"n.d.");
+ $("risk").innerHTML='<strong>'+esc(d.risk_label||"Regime di mercato")+' · VIX '+fmt(d.vix,2)+'</strong><span>'+esc(d.risk_text||"")+'</span><div class="sub">Regime RAPTOR: '+esc(d.vix_regime||"n.d.")+' · ultimo aggiornamento geografico: '+esc(d.geo_updated||"n.d.")+'</div>';
+ const c=d.trend_counts||{};$("stats").innerHTML=[["ETF geografici",Object.values(c).reduce((a,b)=>a+(b||0),0)],["Trend VERDE",c.VERDE||0],["Trend GRIGIO",c.GRIGIO||0],["Trend ROSSO",c.ROSSO||0],["ETF nel motore BIG",d.big?.universe??"—"],["Segnali recenti BIG",d.big?.recent_signals?.length??0]].map(x=>'<div class="stat"><b>'+esc(x[1])+'</b><span>'+x[0]+'</span></div>').join("");
+ $("summary").textContent=d.summary||"";
+ $("source").textContent="BIG aggiornato: "+(d.big?.generated||"n.d.")+" · TOP20 aggiornato: "+(d.top20?.generated||"n.d.");
+ $("areas").innerHTML=(d.areas||[]).map(a=>'<article class="area"><div class="area-head"><h3>'+esc(a.name)+'</h3><span class="weight">Peso obiettivo '+a.weight+'%</span></div><div><span class="stance '+stanceClass(a.stance)+'">'+esc(a.stance)+'</span></div><div class="metrics"><span>Score medio <b>'+fmt(a.avg_score)+'</b></span><span>7 sed. <b class="'+cls(a.avg_perf7)+'">'+pct(a.avg_perf7)+'</b></span><span>30 sed. <b class="'+cls(a.avg_perf30)+'">'+pct(a.avg_perf30)+'</b></span></div><div class="metrics"><span>Verdi '+a.green+'/'+a.count+'</span><span>Rossi '+a.red+'/'+a.count+'</span><span>Stress medio '+fmt(a.avg_stress)+'</span></div><p class="sub">'+esc(a.reason)+'</p>'+table(a.leaders||[])+'</article>').join("")||'<div class="empty">Dati geografici non disponibili.</div>';
+ $("global").innerHTML=table(d.global||[]);$("factors").innerHTML=table(d.factors||[]);
+ $("topmeta").textContent="Score tecnico 0–100 · "+(d.top20?.period||"storico")+" · "+(d.top20?.generated||"dati non disponibili");
+ $("top20").innerHTML=table(d.top20?.rows||[],"top");
+ const sig=d.big?.recent_signals||[];$("signals").innerHTML=sig.length?'<ul class="compact">'+sig.map(x=>'<li><b>'+esc(x.ticker)+'</b> · '+esc(x.name)+' · '+esc(x.date)+' · '+x.count+' sistemi</li>').join("")+'</ul>':'<div class="empty">Nessun segnale registrato.</div>';
+ const a=d.mean_reversion||{};$("auditmeta").textContent="Ultimo audit: "+(a.generated||"n.d.");
+ $("audit").innerHTML=[["MR · operazioni",a.mr?.trades??"—"],["MR · aperte",a.mr?.open??"—"],["SMR · operazioni",a.smr?.trades??"—"],["SMR · aperte",a.smr?.open??"—"]].map(x=>'<div class="stat"><b>'+esc(x[1])+'</b><span>'+x[0]+'</span></div>').join("");
+ const m=d.method||{};$("method").innerHTML='<ul class="compact">'+Object.entries(m).map(([k,v])=>'<li><b>'+esc(k)+'</b>: '+esc(v)+'</li>').join("")+'</ul>';
+}
+async function load(){
+ $("summary").textContent="Caricamento…";
+ try{
+  const [cur,hist]=await Promise.all([fetch("data/bollettino.json?ts="+Date.now()),fetch("data/bollettino_storico.json?ts="+Date.now())]);
+  if(!cur.ok)throw Error("Il bollettino non è ancora stato generato: avvia Aggiorna BIGCHATGPT da GitHub Actions.");
+  latest=await cur.json();history=hist.ok?(await hist.json()).issues||[]:[];
+  const select=$("archive"),chosen=select.value;
+  select.innerHTML='<option value="">Ultima edizione</option>'+history.slice().reverse().map(x=>'<option value="'+esc(x.date)+'">'+esc(x.date)+'</option>').join("");
+  select.value=chosen;
+  const selected=history.find(x=>x.date===select.value)||latest;render(selected);
+ }catch(e){$("meta").textContent=e.message;$("summary").textContent="I dati del bollettino non sono disponibili."}
+}
+$("archive").addEventListener("change",()=>render(history.find(x=>x.date===$("archive").value)||latest));
+$("reload").addEventListener("click",load);load();
+</script>
+</body></html>
