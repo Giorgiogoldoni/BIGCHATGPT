@@ -43,7 +43,7 @@ const meta=document.getElementById('meta'),body=document.getElementById('rows'),
 const sys=document.getElementById('sys'),ex=document.getElementById('exit'),sysf=document.getElementById('sysf'),hor=document.getElementById('hor');
 try{
 const r=await fetch('data/benchmark.json',{cache:'no-store'});if(!r.ok)throw new Error('benchmark.json non ancora pubblicato');const d=await r.json();
-meta.innerHTML='<b>Ultimo calcolo:</b> '+d.generated+' · <b>Storico:</b> '+d.period+' · <b>Costo:</b> '+d.cost_round_trip_bps+' bp round-trip · '+d.universe_filter;
+const generatedDate=String(d.generated||'').match(/^\\d{4}-\\d{2}-\\d{2}/);\nconst generatedLabel=generatedDate?new Date(generatedDate[0]+'T12:00:00Z').toLocaleDateString('it-IT',{day:'2-digit',month:'long',year:'numeric'}):d.generated;\nmeta.innerHTML='<b>Ultimo ricalcolo effettivo:</b> '+generatedLabel+' <span class="muted">('+d.generated+')</span><br><b>Storico:</b> '+d.period+' · <b>Costo:</b> '+d.cost_round_trip_bps+' bp round-trip<br><b>Nota:</b> questa è la data dei dati del benchmark, non quella dell’ultima pubblicazione del sito. Il benchmark viene ricalcolato solo con l’aggiornamento completo della classifica.';
 const names={mom:'Momentum',cd:'Compra dal',core:'Core BUY1/2/3',azb:'Az BUY2/3',inv:'Inversione',sbb:'Super Best Buy',psar:'Parabolic SAR',adx:'ADX',ema:'EMA 20/50',k5:'Kamal 5',mr:'Mean Reversion',smr:'Super Mean Reversion',chat_trend_pullback:'Trend Pullback (ChatGPT)'};
 [...new Set(d.ranking.map(x=>x.system))].forEach(v=>sys.add(new Option(names[v]||v,v)));
 [...new Set(d.ranking.map(x=>x.exit))].forEach(v=>ex.add(new Option(v,v)));
