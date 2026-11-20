@@ -48,6 +48,9 @@ jobs:
       - name: Scarica dati e calcola segnali
         run: python build.py
         working-directory: scripts
+      - name: Genera Bollettino quotidiano e archivio
+        run: python bollettino.py
+        working-directory: scripts
       - name: Esporta benchmark Excel
         run: python export_benchmark.py
         working-directory: scripts
@@ -60,7 +63,7 @@ jobs:
       - name: Prepara il sito
         run: |
           mkdir _site
-          cp index.html grafico.html classifica.html mercato.html top20.html benchmark.html mr.html smr.html _site/
+          cp index.html grafico.html classifica.html mercato.html top20.html benchmark.html mr.html smr.html bollettino.html _site/
           cp -r data _site/data
       - uses: actions/upload-pages-artifact@v3
         with:
