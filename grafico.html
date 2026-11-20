@@ -84,5 +84,5 @@ $("xls").onclick=()=>{const wb=XLSX.utils.book_new();
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet((C.tr||[]).map(t=>({Sistema:nm(t[0]),Ingresso:t[1],"Prezzo ingresso":t[2],Uscita:t[3]||"","Prezzo uscita":t[4]||"",Motivo:t[5]||"","Guadagno %":t[6],Stato:t[3]?"Chiusa":"Aperta"}))),"Posizioni");
  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(C.d.map(r=>({Data:r[0],Apertura:r[1],Massimo:r[2],Minimo:r[3],Chiusura:r[4]}))),"Prezzi");XLSX.writeFile(wb,"big_"+C.t+".xlsx")};
 </script>
-<nav class="big-nav" aria-label="Navigazione principale BIGCHATGPT"><a href="index.html">BIG</a><a href="top20.html">TOP 20</a><a href="classifica.html">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a></nav>
+<nav class="big-nav" aria-label="Navigazione principale BIGCHATGPT"><a href="index.html">BIG</a><a href="top20.html">TOP 20</a><a href="bollettino.html">Bollettino</a><a href="classifica.html">Classifica</a><a href="benchmark.html">Benchmark</a><a href="mercato.html">Mercato</a><a href="mr.html">MR</a><a href="smr.html">SMR</a></nav>
 </body></html>
