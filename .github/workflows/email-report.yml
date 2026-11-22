@@ -233,7 +233,7 @@ jobs:
               if not line.strip():
                   continue
               safe = html.escape(line)
-              if line.startswith(("QUADRO DI MERCATO", "SELEZIONI E MOTIVAZIONI", "CONTESTO PER AREA", "TOP 5 SCORE")):
+              if line.startswith(("QUADRO DI MERCATO", "SELEZIONI E MOTIVAZIONI", "UNIVERSO GLOBAL", "FATTORI E STILI", "CONTESTO PER AREA", "TOP 5 SCORE")):
                   html_parts.append(f'<h2 style="font-size:17px;color:#17365d;border-bottom:2px solid #dce4ee;padding-bottom:7px;margin:24px 0 12px;">{safe}</h2>')
               elif re.match(r"^(ACQUISTARE|MANTENERE|RIDURRE / EVITARE|ATTENDERE) \(\d+\)$", line):
                   html_parts.append(f'<h3 style="font-size:15px;margin:18px 0 10px;padding:9px 12px;background:#eaf0f7;border-radius:6px;color:#17365d;">{safe}</h3>')
