@@ -195,7 +195,7 @@ jobs:
               safe = html.escape(line)
               if line.startswith(("QUADRO DI MERCATO", "SELEZIONI E MOTIVAZIONI", "CONTESTO PER AREA", "TOP 5 SCORE")):
                   html_parts.append(f'<h2 style="font-size:17px;color:#17365d;border-bottom:2px solid #dce4ee;padding-bottom:7px;margin:24px 0 12px;">{safe}</h2>')
-              elif re.match(r"^(ACQUISTARE|MANTENERE|RIDURRE / EVITARE|ATTENDERE) \\(\\d+\\)$", line):
+              elif re.match(r"^(ACQUISTARE|MANTENERE|RIDURRE / EVITARE|ATTENDERE) \(\d+\)$", line):
                   html_parts.append(f'<h3 style="font-size:15px;margin:18px 0 10px;padding:9px 12px;background:#eaf0f7;border-radius:6px;color:#17365d;">{safe}</h3>')
               elif line.startswith("- ") and " — " in line:
                   html_parts.append(f'<div style="margin:12px 0 0;padding:13px;border:1px solid #dce3eb;border-radius:8px;background:#fbfcfe;"><div style="font-weight:bold;font-size:14px;color:#17365d;">{safe}</div>')
