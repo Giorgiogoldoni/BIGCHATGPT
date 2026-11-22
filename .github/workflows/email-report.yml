@@ -141,6 +141,46 @@ jobs:
                           f"ADX {row.get('adx', 'n.d.')}; stress {row.get('stress_score', 'n.d.')}"
                       )
 
+              # Universo Global: monitoraggio separato dalle sei aree geografiche.
+              def append_monitor_section(title, rows, empty_text):
+                  lines.extend(["", f"{title} ({len(rows)})"])
+                  if not rows:
+                      lines.append(empty_text)
+                      return
+                  for row in rows:
+                      ticker = row.get("ticker") or "n.d."
+                      trend = row.get("trend") or "n.d."
+                      rel = row.get("trend_rs") or "n.d."
+                      level = row.get("buy_level") or "n.d."
+                      if trend == "VERDE" and rel == "VERDE" and level == "BUY":
+                          reading = "Configurazione positiva con livello BUY: verificare comunque tutti i filtri operativi."
+                      elif trend == "ROSSO" and rel == "ROSSO":
+                          reading = "Trend e forza relativa deboli: evitare nuovi ingressi."
+                      elif trend == "VERDE" and rel == "VERDE":
+                          reading = "Trend e forza relativa positivi, ma manca una conferma completa di acquisto."
+                      else:
+                          reading = f"Segnali non concordi: trend {trend}, forza relativa {rel}, livello {level}."
+                      lines.append(
+                          f"- {ticker} — {row.get('name') or ticker}"
+                          f" | Score {row.get('score', 'n.d.')}"
+                          f" | Trend {trend} | RS {rel} | Livello {level}"
+                      )
+                      lines.append(f"  Lettura: {reading}")
+                      lines.append(
+                          f"  Dati: perf. 7 sedute {row.get('perf7', 'n.d.')}%; "
+                          f"30 sedute {row.get('perf30', 'n.d.')}%; RSI {row.get('rsi', 'n.d.')}; "
+                          f"ADX {row.get('adx', 'n.d.')}; stress {row.get('stress_score', 'n.d.')}"
+                      )
+
+              append_monitor_section(
+                  "UNIVERSO GLOBAL — ETF mondiali", data.get("global", []),
+                  "Nessun ETF Global presente nel feed geografico."
+              )
+              append_monitor_section(
+                  "FATTORI E STILI — monitoraggio separato", data.get("factors", []),
+                  "Nessun ETF fattoriale presente nel feed geografico."
+              )
+
               lines += [
                   "",
                   "CONTESTO PER AREA",
