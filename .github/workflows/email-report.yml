@@ -14,7 +14,29 @@ jobs:
     if: github.event.workflow_run.head_branch == 'main'
     runs-on: ubuntu-latest
     steps:
-      - name: Invia notifica email esito aggiornamento
+      - name: Scarica il report prodotto dal run
+        if: github.event.workflow_run.conclusion == 'success'
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: github-pages
+          path: ./pages-artifact
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Estrae i dati del bollettino
+        if: github.event.workflow_run.conclusion == 'success'
+        run: |
+          mkdir -p ./site
+          if [ -f ./pages-artifact/artifact.tar ]; then
+            tar -xf ./pages-artifact/artifact.tar -C ./site
+          elif [ -f ./pages-artifact/data/bollettino.json ]; then
+            cp -r ./pages-artifact/. ./site/
+          fi
+          test -f ./site/data/bollettino.json && echo "Bollettino disponibile" || echo "Bollettino non trovato nell'artifact"
+
+      - name: Invia bollettino operativo via email
         env:
           MAIL_USERNAME: ${{ secrets.MAIL_USERNAME }}
           MAIL_APP_PASSWORD: ${{ secrets.MAIL_APP_PASSWORD }}
@@ -27,7 +49,8 @@ jobs:
           RUN_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           python - <<'PY'
-          import os, smtplib
+          import os, json, smtplib
+          from pathlib import Path
           from email.message import EmailMessage
           from datetime import datetime
           from zoneinfo import ZoneInfo
@@ -38,31 +61,130 @@ jobs:
           conclusion = os.environ["RUN_CONCLUSION"]
           run_url = os.environ["RUN_URL"]
           updated = datetime.fromisoformat(os.environ["RUN_UPDATED_AT"].replace("Z", "+00:00"))
-          local_time = updated.astimezone(ZoneInfo("Europe/Rome")).strftime("%d/%m/%Y alle %H:%M:%S")
+          local_time = updated.astimezone(ZoneInfo("Europe/Rome")).strftime("%d/%m/%Y alle %H:%M")
           ok = conclusion == "success"
           status = "COMPLETATO CON SUCCESSO" if ok else f"TERMINATO CON ESITO: {conclusion.upper()}"
-          subject = f"BIGCHATGPT — aggiornamento {status}"
-          body = f"""Rapporto automatico BIGCHATGPT
+          subject = f"BIGCHATGPT — bollettino operativo {status}"
 
-          Stato workflow: {status}
-          Data e ora di conclusione: {local_time} (ora italiana)
-          Run GitHub: #{os.environ['RUN_NUMBER']}
-          Commit: {os.environ['RUN_HEAD_SHA'][:12]}
+          lines = [
+              "BIGCHATGPT — BOLLETTINO OPERATIVO",
+              f"Aggiornamento: {local_time} (ora italiana)",
+              f"Run: #{os.environ['RUN_NUMBER']} · Commit: {os.environ['RUN_HEAD_SHA'][:12]}",
+              "",
+          ]
 
-          {"L'aggiornamento risulta completato. Consulta il sito per TOP20, MR, SMR e benchmark." if ok else "ATTENZIONE: aggiornamento non riuscito. Non considerare i dati del sito come appena aggiornati finché il workflow non viene corretto e completato."}
+          report_path = Path("site/data/bollettino.json")
+          if ok and report_path.exists():
+              data = json.loads(report_path.read_text(encoding="utf-8"))
+              lines += [
+                  f"QUADRO DI MERCATO — {data.get('date', 'data n.d.')}",
+                  f"Regime: {data.get('risk_label', 'n.d.')} · VIX: {data.get('vix', 'n.d.')}",
+                  data.get("risk_text", ""),
+                  data.get("summary", ""),
+                  "",
+                  "SELEZIONI E MOTIVAZIONI",
+              ]
+              actions = {"ACQUISTARE": [], "MANTENERE": [], "RIDURRE / EVITARE": [], "ATTENDERE": []}
+              seen = set()
+              for area in data.get("areas", []):
+                  for row in area.get("leaders", []):
+                      ticker = row.get("ticker")
+                      if not ticker or ticker in seen:
+                          continue
+                      seen.add(ticker)
+                      trend = row.get("trend")
+                      rel = row.get("trend_rs")
+                      stress = row.get("stress_score")
+                      strict_buy = (
+                          row.get("buy_level") == "BUY" and trend == "VERDE" and rel == "VERDE"
+                          and row.get("mm_aligned") is True and row.get("sar_bullish") is True
+                          and row.get("vortex_bullish") is True and row.get("rvi_bullish") is True
+                          and isinstance(stress, (int, float)) and stress <= 1
+                      )
+                      if strict_buy:
+                          label = "ACQUISTARE"
+                          why = "BUY confermato: trend e forza relativa verdi, medie allineate, SAR/Vortex/RVI rialzisti e stress contenuto."
+                      elif trend == "ROSSO" and rel == "ROSSO":
+                          label = "RIDURRE / EVITARE"
+                          why = "Trend e forza relativa entrambi rossi: configurazione debole, non adatta a nuovi ingressi."
+                      elif trend == "VERDE" and rel == "VERDE":
+                          label = "MANTENERE"
+                          missing = []
+                          if row.get("buy_level") != "BUY": missing.append("manca un trigger BUY")
+                          if row.get("mm_aligned") is not True: missing.append("medie non allineate")
+                          if row.get("sar_bullish") is not True: missing.append("SAR non rialzista")
+                          if row.get("vortex_bullish") is not True: missing.append("Vortex non rialzista")
+                          if row.get("rvi_bullish") is not True: missing.append("RVI non rialzista")
+                          if not isinstance(stress, (int, float)) or stress > 1: missing.append("stress oltre soglia")
+                          why = "Trend e forza relativa positivi; " + (", ".join(missing) if missing else "segnale positivo ma non classificato come nuovo acquisto") + "."
+                      else:
+                          label = "ATTENDERE"
+                          why = f"Conferme non concordi: trend {trend or 'n.d.'}, forza relativa {rel or 'n.d.'}, livello {row.get('buy_level') or 'n.d.'}."
+                      actions[label].append((ticker, row, why, area.get("name", "")))
 
-          Sito BIGCHATGPT: https://giorgiogoldoni.github.io/BIGCHATGPT/
-          Dettaglio workflow: {run_url}
+              for label in ("ACQUISTARE", "MANTENERE", "RIDURRE / EVITARE", "ATTENDERE"):
+                  items = actions[label]
+                  lines += ["", f"{label} ({len(items)})"]
+                  if not items:
+                      lines.append("Nessuno strumento selezionato.")
+                  for ticker, row, why, area_name in items:
+                      lines.append(
+                          f"- {ticker} — {row.get('name') or ticker} [{area_name}]"
+                          f" | Score {row.get('score', 'n.d.')}"
+                          f" | Trend {row.get('trend', 'n.d.')}"
+                          f" | RS {row.get('trend_rs', 'n.d.')}"
+                      )
+                      lines.append(f"  Motivo: {why}")
+                      lines.append(
+                          f"  Dati: perf. 7 sedute {row.get('perf7', 'n.d.')}%; "
+                          f"30 sedute {row.get('perf30', 'n.d.')}%; RSI {row.get('rsi', 'n.d.')}; "
+                          f"ADX {row.get('adx', 'n.d.')}; stress {row.get('stress_score', 'n.d.')}"
+                      )
 
-          Questa email è generata automaticamente da GitHub Actions.
-          """
+              lines += [
+                  "",
+                  "CONTESTO PER AREA",
+              ]
+              for area in data.get("areas", []):
+                  lines.append(f"- {area.get('name')}: {area.get('stance')} — {area.get('reason')}")
+              top = (data.get("top20") or {}).get("rows", [])[:5]
+              lines += ["", "TOP 5 SCORE TECNICO (classifica, non segnale automatico di acquisto)"]
+              if top:
+                  for row in top:
+                      lines.append(f"- {row.get('t')} — score {row.get('score')} | ROC20 {row.get('roc20')}% | RSI {row.get('rsi14')} | ADX {row.get('adx14')}")
+              else:
+                  lines.append("Classifica non disponibile.")
+              lines += [
+                  "",
+                  "Nota: le indicazioni sono filtri quantitativi descrittivi, non ordini automatici. "
+                  "ACQUISTARE richiede la confluenza completa dei filtri; MANTENERE indica trend positivo ma non un nuovo trigger; "
+                  "RIDURRE/EVITARE richiede trend e forza relativa entrambi rossi; ATTENDERE segnala dati discordanti.",
+              ]
+          elif not ok:
+              lines += [
+                  "ATTENZIONE: aggiornamento non riuscito.",
+                  "Non considerare aggiornati i segnali e le selezioni. Verificare il workflow prima di prendere decisioni.",
+              ]
+          else:
+              lines += [
+                  "ATTENZIONE: aggiornamento completato ma il file del bollettino non è presente nell'artifact.",
+                  "Nessuna selezione è stata inventata o ricostruita da dati precedenti.",
+              ]
+
+          lines += [
+              "",
+              "Bollettino completo e grafici: https://giorgiogoldoni.github.io/BIGCHATGPT/bollettino.html",
+              f"Dettaglio tecnico del run: {run_url}",
+              "",
+              "Email automatica BIGCHATGPT.",
+          ]
           msg = EmailMessage()
           msg["From"] = username
           msg["To"] = recipient
           msg["Subject"] = subject
-          msg.set_content(body)
+          msg.set_content("\\n".join(lines))
           with smtplib.SMTP_SSL("smtp.gmail.com", 465, timeout=30) as server:
               server.login(username, password)
               server.send_message(msg)
-          print(f"Email inviata a {recipient}: {status}")
+          print(f"Email operativa inviata a {recipient}: {status}")
           PY
