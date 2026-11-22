@@ -87,7 +87,9 @@ jobs:
               actions = {"ACQUISTARE": [], "MANTENERE": [], "RIDURRE / EVITARE": [], "ATTENDERE": []}
               seen = set()
               for area in data.get("areas", []):
-                  for row in area.get("leaders", []):
+                  # Prima i BUY confermati su tutto l'universo dell'area, poi i migliori 5 per score.
+                  candidates = area.get("buy_candidates", []) + area.get("leaders", [])
+                  for row in candidates:
                       ticker = row.get("ticker")
                       if not ticker or ticker in seen:
                           continue
