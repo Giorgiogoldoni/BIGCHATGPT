@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Scarica il report prodotto dal run
-        if: github.event.workflow_run.conclusion == 'success'
         uses: actions/download-artifact@v4
         continue-on-error: true
         with:
@@ -26,7 +25,6 @@ jobs:
           run-id: ${{ github.event.workflow_run.id }}
 
       - name: Estrae i dati del bollettino
-        if: github.event.workflow_run.conclusion == 'success'
         run: |
           mkdir -p ./site
           if [ -f ./pages-artifact/artifact.tar ]; then
@@ -74,7 +72,7 @@ jobs:
           ]
 
           report_path = Path("site/data/bollettino.json")
-          if ok and report_path.exists():
+          if report_path.exists():
               data = json.loads(report_path.read_text(encoding="utf-8"))
               lines += [
                   f"QUADRO DI MERCATO — {data.get('date', 'data n.d.')}",
