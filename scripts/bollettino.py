@@ -103,6 +103,7 @@ def area_view(name, cfg, by_ticker):
         "avg_perf7": average(rows, "perf7"), "avg_perf30": average(rows, "perf30"),
         "avg_stress": average(rows, "stress_score"), "stance": stance,
         "reason": reason, "leaders": [compact_row(r) for r in rows[:5]],
+        "buy_candidates": [compact_row(r) for r in buy],
     }
 
 
