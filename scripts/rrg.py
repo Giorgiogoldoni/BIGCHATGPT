@@ -1,19 +1,28 @@
-"""RRG weekly snapshot (Yahoo Finance via yfinance); RS-ratio/momentum approximation, not proprietary JdK."""
-import json, datetime as dt
+"""Robust weekly RRG snapshot via Yahoo Finance; approximate, not proprietary JdK."""
+import json, datetime as dt, time
 from pathlib import Path
 import pandas as pd, yfinance as yf
-ROOT=Path(__file__).resolve().parent.parent; DATA=ROOT/"data"
+ROOT=Path(__file__).resolve().parent.parent; DATA=ROOT/"data"; DATA.mkdir(parents=True,exist_ok=True)
 UNIVERSE=json.loads((ROOT/"rrg_universe.json").read_text())
 BENCH=["SPY","ACWI","QQQ","GLD","DBC"]
 TICKERS=sorted(set(x["ticker"] for x in UNIVERSE)|set(BENCH))
-raw=yf.download(TICKERS,period="5y",interval="1wk",auto_adjust=True,group_by="ticker",threads=True,progress=False)
+try: yf.set_tz_cache_location("/tmp/yf-rrg-cache")
+except Exception: pass
 close={}
-for t in TICKERS:
- try:
-  s=raw[t]["Close"] if isinstance(raw.columns,pd.MultiIndex) else raw["Close"]
-  s=s.dropna()
-  if len(s)>70: close[t]=s
- except Exception: pass
+for ticker in TICKERS:
+ for attempt in range(3):
+  try:
+   data=yf.download(ticker,period="5y",interval="1wk",auto_adjust=True,threads=False,progress=False)
+   if data is None or data.empty: raise ValueError("empty response")
+   s=data["Close"]
+   if isinstance(s,pd.DataFrame): s=s.iloc[:,0]
+   s=s.dropna()
+   if len(s)>70: close[ticker]=s
+   break
+  except Exception as exc:
+   print(f"Retry {ticker} {attempt+1}/3: {exc}")
+   time.sleep(2*(attempt+1))
+ print(f"Loaded {ticker}: {len(close.get(ticker,[]))} weekly observations")
 benchmarks={}
 for b in BENCH:
  benchmarks[b]={"dates":[d.strftime("%Y-%m-%d") for d in close[b].index],"values":[round(float(v),5) for v in close[b].values]} if b in close else {"dates":[],"values":[]}
@@ -24,8 +33,8 @@ for item in UNIVERSE:
  for b in BENCH:
   if b not in close or t==b: continue
   df=pd.concat([close[t].rename("asset"),close[b].rename("bench")],axis=1).dropna()
-  ratio=df.asset/df.bench
-  roc12=ratio/ratio.shift(12)-1
+  if len(df)<80: continue
+  ratio=df.asset/df.bench; roc12=ratio/ratio.shift(12)-1
   base=roc12.rolling(52,min_periods=26).mean(); sd=roc12.rolling(52,min_periods=26).std()
   rs=100+5*((roc12-base)/(sd.replace(0,float("nan"))))
   delta=rs-rs.shift(4); dstd=delta.rolling(52,min_periods=26).std()
